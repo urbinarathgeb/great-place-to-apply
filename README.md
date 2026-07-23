@@ -1,3 +1,21 @@
+# 🚀 Great Place To Apply (GPTA)
+
+### ¿Qué es?
+
+**Great Place To Apply** es una plataforma de transparencia laboral orientada a mejorar la experiencia de los candidatos durante los procesos de selección. Es un directorio donde los profesionales pueden compartir de forma anónima sus experiencias reales, permitiendo a la comunidad identificar empresas con procesos de contratación éticos y eficientes.
+
+### ¿De qué trata?
+
+El proyecto surge como respuesta al creciente problema del _ghosting_ laboral y la falta de feedback en los procesos de selección. La plataforma centraliza datos sobre la **velocidad de respuesta**, la **calidad del feedback** y la **transparencia** de los procesos, convirtiendo anécdotas aisladas en datos cuantificables para ayudar a otros candidatos a tomar mejores decisiones.
+
+### ¿Para qué sirve?
+
+**Para los candidatos:** Sirve como un radar de confianza. Antes de aplicar a una empresa, el usuario puede consultar su "Índice de Calidad de Postulación" basado en la experiencia de otros.
+
+**Para el ecosistema:** Obliga a las empresas a ser conscientes de su "marca empleadora" (employer branding), fomentando procesos más humanos y comunicativos.
+
+---
+
 # Astro Starter Kit: Basics
 
 ```sh
