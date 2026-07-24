@@ -1,0 +1,74 @@
+@url = http://localhost:4321
+
+### ========================================
+### GET /api/companies — Listado
+### ========================================
+
+### Listar todas las empresas (page 1, 20 resultados)
+GET {{url}}/api/companies
+
+### Buscar por nombre
+GET {{url}}/api/companies?q=falabella
+
+### Buscar por nombre (parcial)
+GET {{url}}/api/companies?q=banco
+
+### Filtrar por categoría
+GET {{url}}/api/companies?category=mineria
+
+### Filtrar por categoría (retail)
+GET {{url}}/api/companies?category=retail
+
+### Paginación: página 1, 5 resultados
+GET {{url}}/api/companies?page=1&limit=5
+
+### Paginación: página 2, 5 resultados
+GET {{url}}/api/companies?page=2&limit=5
+
+### Combinar: buscar + categoría
+GET {{url}}/api/companies?q=banco&category=banca
+
+### Búsqueda sin resultados
+GET {{url}}/api/companies?q=zzzzzzzzz
+
+### ========================================
+### POST /api/companies — Crear empresa
+### ========================================
+
+### Crear empresa nueva
+POST {{url}}/api/companies
+Content-Type: application/json
+
+{
+  "name": "Google Chile",
+  "website": "https://google.cl",
+  "categoryId": 4
+}
+
+### Crear empresa — duplicado (debería retornar 409)
+POST {{url}}/api/companies
+Content-Type: application/json
+
+{
+  "name": "Falabella",
+  "categoryId": 3
+}
+
+### Crear empresa — body inválido (debería retornar 400)
+POST {{url}}/api/companies
+Content-Type: application/json
+
+{
+  "name": "X",
+  "categoryId": -1
+}
+
+### ========================================
+### GET /api/companies/:slug — Detalle
+### ========================================
+
+### Detalle de empresa por slug
+GET {{url}}/api/companies/falabella
+
+### Detalle — empresa inexistente (debería retornar 404)
+GET {{url}}/api/companies/noexiste
