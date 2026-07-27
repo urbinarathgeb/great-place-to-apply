@@ -19,9 +19,10 @@ import type { APIRoute } from "astro";
 import { db } from "@/db";
 import { companies } from "@/db/schema/companies.schema";
 import { categories } from "@/db/schema/categories.schema";
-import { count, ilike, eq, and } from "drizzle-orm";
+import { count, eq, and } from "drizzle-orm";
 import { slugify } from "@/lib/slug";
 import { createCompanySchema } from "@/lib/validations";
+import { ilikeUnaccent } from "@/lib/search";
 
 export const GET: APIRoute = async ({ url }) => {
   try {
@@ -42,8 +43,9 @@ export const GET: APIRoute = async ({ url }) => {
     const conditions = [];
 
     if (q) {
-      // ilike = case-insensitive LIKE → WHERE name ILIKE '%falabella%'
-      conditions.push(ilike(companies.name, `%${q}%`));
+      // ilikeUnaccent = búsqueda case-insensitive + accent-insensitive
+      // "banco de chilé" → "banco de chile" (sin tildes)
+      conditions.push(ilikeUnaccent(companies.name, `%${q}%`));
     }
     if (category) {
       // eq = equals → WHERE categories.slug = 'mineria'
