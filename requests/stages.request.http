@@ -1,0 +1,25 @@
+@url = http://localhost:4321
+
+### ========================================
+### GET /api/stages — Listado
+### ========================================
+
+
+GET {{url}}/api/stages
+
+###
+GET {{url}}/api/stages?q=postulación
+
+###
+GET {{url}}/api/stages?q=postulacion
+
+### ========================================
+### POST /api/stages — Crear etapa
+### ========================================
+
+POST {{url}}/api/stages
+Content-Type: application/json
+
+{
+  "name": "Entrevista con CEO"
+}
