@@ -4,7 +4,6 @@ import { companies } from "@/db/schema/companies.schema";
 export const reviews = snakeCase.table('reviews', {
 	id: uuid().primaryKey().defaultRandom(),
 	companyId: uuid().references(() => companies.id).notNull(),
-	comment: text().notNull(),
 	ipHash: varchar({ length: 64 }),
 	createdAt: timestamp().defaultNow().notNull(),
 })

@@ -3,6 +3,9 @@ import { db } from "./index";
 import { categories } from "./schema/categories.schema";
 import { companies } from "./schema/companies.schema";
 import { processStages } from "./schema/process-stages.schema";
+import { reviews } from "./schema/reviews.schema";
+import { stageReviews } from "./schema/stage-reviews.schema";
+import { aspectRating } from "./schema/aspect-rating.schema";
 
 config({ path: ".env.development" });
 
@@ -84,6 +87,103 @@ async function seed() {
       .insert(companies)
       .values({ name: company.name, slug: company.slug, categoryId })
       .onConflictDoNothing({ target: companies.slug });
+  }
+
+  console.log("🌱 Seeding reviews...");
+  const allCompanies = await db.select().from(companies);
+  const allStages = await db.select().from(processStages);
+  const companyBySlug = new Map(allCompanies.map((c) => [c.slug, c.id]));
+  const stageBySlug = new Map(allStages.map((s) => [s.slug, s.id]));
+
+  const seedReviews = [
+    {
+      companySlug: "latam-airlines",
+      stages: [
+        {
+          stageSlug: "postulacion",
+          comment: "Postulé por LinkedIn y en menos de 48 horas recibí respuesta. El proceso fue ágil y bien comunicado.",
+          ratings: [
+            { aspectName: "rapidez", score: "4.50" },
+            { aspectName: "feedback", score: "3.00" },
+          ],
+        },
+        {
+          stageSlug: "primera-entrevista",
+          comment: "Entrevista con HR muy agradable. Preguntas enfocadas en experiencia previa y motivaciones. Recibí feedback al día siguiente.",
+          ratings: [
+            { aspectName: "rapidez", score: "4.00" },
+            { aspectName: "feedback", score: "3.50" },
+            { aspectName: "trato", score: "5.00" },
+          ],
+        },
+        {
+          stageSlug: "evaluacion",
+          comment: "Evaluación técnica bien estructurada. Me dieron una semana para completar un caso práctico. Recibí retroalimentación detallada.",
+          ratings: [
+            { aspectName: "rapidez", score: "3.00" },
+            { aspectName: "feedback", score: "4.00" },
+            { aspectName: "transparencia", score: "4.50" },
+          ],
+        },
+      ],
+    },
+    {
+      companySlug: "falabella",
+      stages: [
+        {
+          stageSlug: "postulacion",
+          comment: "Postulación a través de su portal web. Respondieron después de 2 semanas sin previo aviso. Proceso lento.",
+          ratings: [
+            { aspectName: "rapidez", score: "2.00" },
+            { aspectName: "feedback", score: "1.50" },
+            { aspectName: "transparencia", score: "2.00" },
+          ],
+        },
+        {
+          stageSlug: "primera-entrevista",
+          comment: "La entrevista fue cordial pero sentí que no conocían mi perfil. Quedé en espera y nunca volvieron a contactarme.",
+          ratings: [
+            { aspectName: "rapidez", score: "2.50" },
+            { aspectName: "feedback", score: "1.00" },
+            { aspectName: "trato", score: "3.00" },
+          ],
+        },
+      ],
+    },
+  ];
+
+  for (const reviewData of seedReviews) {
+    const companyId = companyBySlug.get(reviewData.companySlug);
+    if (!companyId) {
+      console.warn(`⚠️  Company "${reviewData.companySlug}" not found, skipping review`);
+      continue;
+    }
+
+    await db.transaction(async (tx) => {
+      const [review] = await tx
+        .insert(reviews)
+        .values({ companyId, ipHash: "seed" })
+        .returning({ id: reviews.id });
+
+      for (const sr of reviewData.stages) {
+        const stageId = stageBySlug.get(sr.stageSlug);
+        if (!stageId) {
+          console.warn(`⚠️  Stage "${sr.stageSlug}" not found, skipping`);
+          continue;
+        }
+
+        const [stageReview] = await tx
+          .insert(stageReviews)
+          .values({ reviewId: review.id, stageId, comment: sr.comment })
+          .returning({ id: stageReviews.id });
+
+        for (const r of sr.ratings) {
+          await tx
+            .insert(aspectRating)
+            .values({ stageReviewId: stageReview.id, aspectName: r.aspectName, score: r.score });
+        }
+      }
+    });
   }
 
   console.log("✅ Seed completado");
