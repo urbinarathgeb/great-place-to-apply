@@ -1,6 +1,24 @@
 @url = http://localhost:4321
 
 ### ========================================
+### GET /api/reviews — Listado
+### ========================================
+
+GET {{url}}/api/reviews
+
+###
+GET {{url}}/api/reviews?q=latam
+
+###
+GET {{url}}/api/reviews?page=1&limit=5
+
+### ========================================
+### GET /api/reviews/[id] — Detalle
+### ========================================
+
+GET {{url}}/api/reviews/REEMPLAZAR_CON_UUID
+
+### ========================================
 ### POST /api/reviews — Crear review completa
 ### ========================================
 
