@@ -1,0 +1,40 @@
+@url = http://localhost:4321
+
+### ========================================
+### POST /api/reviews — Crear review completa
+### ========================================
+
+POST {{url}}/api/reviews
+Content-Type: application/json
+
+{
+  "companyId": "REEMPLAZAR_CON_UUID_DE_LATAM",
+  "stageReviews": [
+    {
+      "stageId": 1,
+      "comment": "Postulación rápida a través de LinkedIn, respondieron en 2 días.",
+      "ratings": [
+        { "aspectName": "rapidez", "score": 4.5 },
+        { "aspectName": "feedback", "score": 3.0 }
+      ]
+    },
+    {
+      "stageId": 2,
+      "comment": "Entrevista con HR muy cordial, preguntas estándar sobre experiencia.",
+      "ratings": [
+        { "aspectName": "rapidez", "score": 4.0 },
+        { "aspectName": "feedback", "score": 3.5 },
+        { "aspectName": "trato", "score": 5.0 }
+      ]
+    },
+    {
+      "stageId": 3,
+      "comment": "Desafío técnico bien estructurado, dieron una semana para completarlo.",
+      "ratings": [
+        { "aspectName": "rapidez", "score": 3.0 },
+        { "aspectName": "feedback", "score": 4.0 },
+        { "aspectName": "transparencia", "score": 4.5 }
+      ]
+    }
+  ]
+}
