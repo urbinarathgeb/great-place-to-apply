@@ -1,0 +1,18 @@
+@url = http://localhost:4321
+
+### ========================================
+### GET /api/categories — Listado
+### ========================================
+
+GET {{url}}/api/categories
+
+###
+GET {{url}}/api/categories?q=alimen
+
+###
+POST {{url}}/api/categories
+Content-Type: application/json
+
+{
+  "name": "Marketing"
+}
