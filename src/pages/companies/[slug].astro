@@ -1,0 +1,156 @@
+---
+import Layout from '@/layouts/Layout.astro'
+import Button from '@/components/ui/Button.astro'
+import Badge from '@/components/ui/Badge.astro'
+import { db } from '@/db'
+import { companies } from '@/db/schema/companies.schema'
+import { categories } from '@/db/schema/categories.schema'
+import { reviews } from '@/db/schema/reviews.schema'
+import { stageReviews } from '@/db/schema/stage-reviews.schema'
+import { processStages } from '@/db/schema/process-stages.schema'
+import { aspectRating } from '@/db/schema/aspect-rating.schema'
+import { eq, sql } from 'drizzle-orm'
+
+const { slug } = Astro.params
+
+const [company] = await db
+  .select({
+    id: companies.id,
+    name: companies.name,
+    slug: companies.slug,
+    website: companies.website,
+    logoUrl: companies.logoUrl,
+    categoryName: categories.name,
+    categorySlug: categories.slug,
+  })
+  .from(companies)
+  .leftJoin(categories, eq(companies.categoryId, categories.id))
+  .where(eq(companies.slug, slug!))
+  .limit(1)
+
+if (!company) {
+  return Astro.redirect('/404', 404)
+}
+
+// Reviews list
+const companyReviews = await db
+  .select({
+    id: reviews.id,
+    comment: reviews.comment,
+    avgScore: sql<string>`coalesce(avg(${aspectRating.score})::numeric(3,2), '0')`,
+    createdAt: reviews.createdAt,
+  })
+  .from(reviews)
+  .leftJoin(stageReviews, eq(stageReviews.reviewId, reviews.id))
+  .leftJoin(aspectRating, eq(aspectRating.stageReviewId, stageReviews.id))
+  .where(eq(reviews.companyId, company.id))
+  .groupBy(reviews.id, reviews.comment, reviews.createdAt)
+  .orderBy(sql`${reviews.createdAt} desc`)
+
+// Aspect averages
+const aspectAverages = await db
+  .select({
+    aspectName: aspectRating.aspectName,
+    avg: sql<string>`AVG(${aspectRating.score})::numeric(3,2)`,
+  })
+  .from(aspectRating)
+  .innerJoin(stageReviews, eq(aspectRating.stageReviewId, stageReviews.id))
+  .innerJoin(reviews, eq(stageReviews.reviewId, reviews.id))
+  .where(eq(reviews.companyId, company.id))
+  .groupBy(aspectRating.aspectName)
+
+// Stage distribution
+const stageDistribution = await db
+  .select({
+    name: processStages.name,
+    count: sql<number>`count(*)::int`,
+  })
+  .from(stageReviews)
+  .innerJoin(processStages, eq(stageReviews.stageId, processStages.id))
+  .innerJoin(reviews, eq(stageReviews.reviewId, reviews.id))
+  .where(eq(reviews.companyId, company.id))
+  .groupBy(processStages.name)
+  .orderBy(sql`count(*) desc`)
+---
+
+<Layout title={`${company.name} — Great Place To Apply`} description={`Reviews del proceso de selección en ${company.name}`}>
+  <section class="py-8 md:py-12">
+    <div class="flex items-start justify-between gap-4 mb-8">
+      <div>
+        <p class="text-sm text-muted-foreground">{company.categoryName}</p>
+        <h1 class="text-2xl md:text-3xl font-heading font-bold text-foreground mt-1">{company.name}</h1>
+        {company.website && (
+          <a href={company.website} target="_blank" class="mt-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+            {company.website.replace(/^https?:\/\//, '')}
+          </a>
+        )}
+      </div>
+      <Button href="/reviews/new" size="sm">Escribir review</Button>
+    </div>
+
+    <!-- Aspect averages -->
+    {aspectAverages.length > 0 && (
+      <div class="rounded-xl border bg-card p-5 mb-8">
+        <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Puntuaciones promedio</h2>
+        <div class="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+          {aspectAverages.map((a) => {
+            const score = parseFloat(a.avg)
+            const color = score >= 4 ? 'text-green-600' : score >= 3 ? 'text-amber-600' : 'text-red-500'
+            return (
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-foreground capitalize">{a.aspectName}</span>
+                <span class={`text-lg font-bold tabular-nums ${color}`}>{a.avg}</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )}
+
+    <!-- Stage distribution -->
+    {stageDistribution.length > 0 && (
+      <div class="rounded-xl border bg-card p-5 mb-8">
+        <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Etapas más reportadas</h2>
+        <div class="flex flex-wrap gap-2">
+          {stageDistribution.map((s) => (
+            <Badge variant="outline">{s.name} &times; {s.count}</Badge>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Reviews -->
+    <h2 class="text-lg font-heading font-semibold text-foreground mb-4">
+      Reseñas ({companyReviews.length})
+    </h2>
+
+    {companyReviews.length > 0 ? (
+      <div class="space-y-4">
+        {companyReviews.map((r) => (
+          <a
+            href={`/reviews/${r.id}`}
+            class="block rounded-xl border bg-card text-card-foreground shadow-sm p-5 hover:shadow-md hover:border-primary/20 transition-all"
+          >
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <span class="text-xs text-muted-foreground">{new Date(r.createdAt).toLocaleDateString('es-CL')}</span>
+              <span class="text-sm font-semibold tabular-nums text-accent">{r.avgScore}</span>
+            </div>
+            <p class="text-sm text-foreground leading-relaxed line-clamp-2">
+              &ldquo;{r.comment}&rdquo;
+            </p>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <div class="text-center py-12 rounded-xl border bg-card">
+        <p class="text-muted-foreground">Aún no hay reseñas para esta empresa.</p>
+        <Button href="/reviews/new" class="mt-4">Escribir la primera review</Button>
+      </div>
+    )}
+  </section>
+</Layout>

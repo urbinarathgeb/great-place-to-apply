@@ -1,0 +1,105 @@
+---
+import Layout from '@/layouts/Layout.astro'
+import Button from '@/components/ui/Button.astro'
+import Badge from '@/components/ui/Badge.astro'
+import StarRating from '@/components/ui/StarRating.astro'
+import { db } from '@/db'
+import { companies } from '@/db/schema/companies.schema'
+import { categories } from '@/db/schema/categories.schema'
+import { reviews } from '@/db/schema/reviews.schema'
+import { stageReviews } from '@/db/schema/stage-reviews.schema'
+import { aspectRating } from '@/db/schema/aspect-rating.schema'
+import { eq, sql, and } from 'drizzle-orm'
+import { ilikeUnaccent } from '@/lib/search'
+
+const q = Astro.url.searchParams.get('q') || ''
+
+const conditions = []
+if (q) {
+  conditions.push(ilikeUnaccent(companies.name, `%${q}%`))
+}
+
+const where = conditions.length > 0 ? and(...conditions) : undefined
+
+const results = await db
+  .select({
+    id: companies.id,
+    name: companies.name,
+    slug: companies.slug,
+    logoUrl: companies.logoUrl,
+    categoryName: categories.name,
+    categorySlug: categories.slug,
+    reviewsCount: sql<number>`count(distinct ${reviews.id})::int`,
+    avgScore: sql<string>`coalesce(avg(${aspectRating.score})::numeric(3,2), '0')`,
+    latestComment: sql<string | null>`
+      (SELECT comment FROM reviews
+       WHERE reviews.company_id = ${companies.id}
+       ORDER BY reviews.created_at DESC
+       LIMIT 1)
+    `,
+  })
+  .from(companies)
+  .leftJoin(categories, eq(companies.categoryId, categories.id))
+  .leftJoin(reviews, eq(reviews.companyId, companies.id))
+  .leftJoin(stageReviews, eq(stageReviews.reviewId, reviews.id))
+  .leftJoin(aspectRating, eq(aspectRating.stageReviewId, stageReviews.id))
+  .where(where)
+  .groupBy(companies.id, categories.name, categories.slug)
+  .orderBy(companies.name)
+---
+
+<Layout title={q ? `Resultados para "${q}" — Great Place To Apply` : 'Empresas — Great Place To Apply'} wide>
+  <section class="py-8 md:py-12">
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-2xl font-heading font-bold text-foreground">Empresas</h1>
+        {q && (
+          <p class="mt-1 text-sm text-muted-foreground">
+            Resultados para &ldquo;{q}&rdquo; &middot; {results.length} {results.length === 1 ? 'empresa' : 'empresas'}
+          </p>
+        )}
+      </div>
+      <Button href="/reviews/new">Escribir review</Button>
+    </div>
+
+    {results.length > 0 ? (
+      <div class="grid gap-4 sm:grid-cols-2">
+        {results.map((c) => (
+          <a
+            href={`/companies/${c.slug}`}
+            class="block rounded-xl border bg-card text-card-foreground shadow-sm p-5 hover:shadow-md hover:border-primary/20 transition-all"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex-1 min-w-0">
+                <h2 class="font-heading text-base font-semibold text-foreground truncate">
+                  {c.name}
+                </h2>
+                {c.categoryName && (
+                  <Badge variant="secondary" class="mt-1.5">{c.categoryName}</Badge>
+                )}
+              </div>
+              <div class="text-right shrink-0">
+                <StarRating score={parseFloat(c.avgScore)} size={14} />
+                <p class="mt-0.5 text-xs text-muted-foreground">{c.reviewsCount} {c.reviewsCount === 1 ? 'review' : 'reviews'}</p>
+              </div>
+            </div>
+
+            {c.latestComment && (
+              <div class="mt-3 border-t pt-3">
+                <p class="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                  &ldquo;{c.latestComment}&rdquo;
+                </p>
+              </div>
+            )}
+          </a>
+        ))}
+      </div>
+    ) : (
+      <div class="text-center py-16">
+        <p class="text-muted-foreground font-medium">Sin resultados</p>
+        <p class="text-sm text-muted-foreground/60 mt-1">Intenta con otro término de búsqueda</p>
+        <Button href="/" class="mt-6">Volver al inicio</Button>
+      </div>
+    )}
+  </section>
+</Layout>

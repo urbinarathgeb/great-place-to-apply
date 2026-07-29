@@ -1,0 +1,136 @@
+---
+import Layout from '@/layouts/Layout.astro'
+import Badge from '@/components/ui/Badge.astro'
+import Button from '@/components/ui/Button.astro'
+import { db } from '@/db'
+import { reviews } from '@/db/schema/reviews.schema'
+import { companies } from '@/db/schema/companies.schema'
+import { stageReviews } from '@/db/schema/stage-reviews.schema'
+import { processStages } from '@/db/schema/process-stages.schema'
+import { aspectRating } from '@/db/schema/aspect-rating.schema'
+import { eq, sql } from 'drizzle-orm'
+
+const { id } = Astro.params
+
+const [review] = await db
+  .select({
+    id: reviews.id,
+    companyId: companies.id,
+    companyName: companies.name,
+    companySlug: companies.slug,
+    comment: reviews.comment,
+    createdAt: reviews.createdAt,
+    avgScore: sql<string>`coalesce(avg(${aspectRating.score})::numeric(3,2), '0')`,
+  })
+  .from(reviews)
+  .innerJoin(companies, eq(reviews.companyId, companies.id))
+  .leftJoin(stageReviews, eq(stageReviews.reviewId, reviews.id))
+  .leftJoin(aspectRating, eq(aspectRating.stageReviewId, stageReviews.id))
+  .where(eq(reviews.id, id!))
+  .groupBy(reviews.id, reviews.comment, reviews.createdAt, companies.id, companies.name, companies.slug)
+  .limit(1)
+
+if (!review) {
+  return Astro.redirect('/404')
+}
+
+const stages = await db
+  .select({
+    id: stageReviews.id,
+    name: processStages.name,
+    comment: stageReviews.comment,
+  })
+  .from(stageReviews)
+  .innerJoin(processStages, eq(stageReviews.stageId, processStages.id))
+  .where(eq(stageReviews.reviewId, review.id))
+  .orderBy(processStages.name)
+
+const stagesWithRatings = await Promise.all(
+  stages.map(async (sr) => {
+    const ratings = await db
+      .select({ aspectName: aspectRating.aspectName, score: aspectRating.score })
+      .from(aspectRating)
+      .where(eq(aspectRating.stageReviewId, sr.id))
+
+    const ratingsObj: Record<string, string> = {}
+    for (const r of ratings) {
+      ratingsObj[r.aspectName] = r.score
+    }
+
+    return { name: sr.name, comment: sr.comment, ratings: ratingsObj }
+  })
+)
+---
+
+<Layout title={`Review de ${review.companyName} — Great Place To Apply`}>
+  <section class="py-8 md:py-12 max-w-3xl mx-auto">
+    <a
+      href={`/companies/${review.companySlug}`}
+      class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+      {review.companyName}
+    </a>
+
+    <div class="flex items-start justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-xl md:text-2xl font-heading font-bold text-foreground">
+          Review del proceso de selección
+        </h1>
+        <p class="mt-1 text-sm text-muted-foreground">
+          {new Date(review.createdAt).toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })}
+        </p>
+      </div>
+      <span class="text-2xl font-bold tabular-nums text-accent shrink-0">{review.avgScore}</span>
+    </div>
+
+    <!-- General comment -->
+    <div class="rounded-xl border bg-card p-5 mb-8">
+      <h2 class="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Comentario general</h2>
+      <p class="text-sm text-foreground leading-relaxed">&ldquo;{review.comment}&rdquo;</p>
+    </div>
+
+    <!-- Stages -->
+    <h2 class="text-lg font-heading font-semibold text-foreground mb-4">Etapas del proceso</h2>
+
+    <div class="space-y-4">
+      {stagesWithRatings.map((stage, i) => (
+        <div class="rounded-xl border bg-card p-5">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">
+              {i + 1}
+            </span>
+            <h3 class="font-heading text-sm font-semibold text-foreground">{stage.name}</h3>
+          </div>
+
+          <p class="text-sm text-foreground leading-relaxed mb-3">
+            &ldquo;{stage.comment}&rdquo;
+          </p>
+
+          {Object.keys(stage.ratings).length > 0 && (
+            <div class="flex flex-wrap gap-2">
+              {Object.entries(stage.ratings).map(([aspect, score]) => {
+                const s = parseFloat(score)
+                const color = s >= 4 ? 'text-green-600' : s >= 3 ? 'text-amber-600' : 'text-red-500'
+                return (
+                  <Badge variant="outline" class="flex items-center gap-1">
+                    <span class="capitalize">{aspect}</span>
+                    <span class={`font-semibold ${color}`}>{score}</span>
+                  </Badge>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+
+    <div class="mt-8 text-center">
+      <Button href={`/companies/${review.companySlug}`}>
+        Ver todas las reviews de {review.companyName}
+      </Button>
+    </div>
+  </section>
+</Layout>
