@@ -19,7 +19,10 @@ import type { APIRoute } from "astro";
 import { db } from "@/db";
 import { companies } from "@/db/schema/companies.schema";
 import { categories } from "@/db/schema/categories.schema";
-import { count, eq, and } from "drizzle-orm";
+import { reviews } from "@/db/schema/reviews.schema";
+import { stageReviews } from "@/db/schema/stage-reviews.schema";
+import { aspectRating } from "@/db/schema/aspect-rating.schema";
+import { count, eq, and, sql } from "drizzle-orm";
 import { slugify } from "@/lib/slug";
 import { createCompanySchema } from "@/lib/validations";
 import { ilikeUnaccent } from "@/lib/search";
@@ -60,21 +63,30 @@ export const GET: APIRoute = async ({ url }) => {
     // Esto genera SQL como: SELECT id, name, slug... FROM companies LEFT JOIN categories...
 
     const results = await db
-      .select({                          // qué columnas queremos (en vez de *)
+      .select({
         id: companies.id,
         name: companies.name,
         slug: companies.slug,
         logoUrl: companies.logoUrl,
-        categoryName: categories.name,   // renombramos para evitar conflicto con companies.name
+        categoryName: categories.name,
         categorySlug: categories.slug,
+        reviewsCount: sql<number>`count(distinct ${reviews.id})::int`,
+        avgScore: sql<string>`coalesce(avg(${aspectRating.score})::numeric(3,2), '0')`,
       })
-      .from(companies)                   // FROM companies
-      .leftJoin(categories,              // LEFT JOIN categories ON companies.category_id = categories.id
+      .from(companies)
+      .leftJoin(categories,
         eq(companies.categoryId, categories.id))
-      .where(where)                      // WHERE (condiciones dinámicas, o nada)
-      .orderBy(companies.name)           // ORDER BY name ASC
-      .limit(limit)                      // LIMIT 20
-      .offset(offset);                   // OFFSET 0
+      .leftJoin(reviews,
+        eq(reviews.companyId, companies.id))
+      .leftJoin(stageReviews,
+        eq(stageReviews.reviewId, reviews.id))
+      .leftJoin(aspectRating,
+        eq(aspectRating.stageReviewId, stageReviews.id))
+      .where(where)
+      .groupBy(companies.id, categories.name, categories.slug)
+      .orderBy(companies.name)
+      .limit(limit)
+      .offset(offset);
 
     // ── PASO 4: Contar total de resultados ───────────────────────
     // Necesitamos el total para calcular páginas

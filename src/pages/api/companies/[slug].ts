@@ -47,7 +47,7 @@ export const GET: APIRoute = async ({ params }) => {
     }
 
     const companyReviews = await db
-      .select({ id: reviews.id, createdAt: reviews.createdAt })
+      .select({ id: reviews.id, comment: reviews.comment, createdAt: reviews.createdAt })
       .from(reviews)
       .where(eq(reviews.companyId, company.id))
       .orderBy(reviews.createdAt);
@@ -82,6 +82,7 @@ export const GET: APIRoute = async ({ params }) => {
 
         return {
           id: review.id,
+          comment: review.comment,
           createdAt: review.createdAt,
           stages: stagesWithRatings,
         };

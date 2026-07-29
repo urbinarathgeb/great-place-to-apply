@@ -28,6 +28,7 @@ export const GET: APIRoute = async ({ url }) => {
         id: reviews.id,
         companyName: companies.name,
         companySlug: companies.slug,
+        comment: reviews.comment,
         stagesCount: sql<number>`count(distinct ${stageReviews.id})::int`,
         ratingsCount: sql<number>`count(${aspectRating.id})::int`,
         avgScore: sql<string>`coalesce(avg(${aspectRating.score})::numeric(3,2), '0')`,
@@ -38,7 +39,7 @@ export const GET: APIRoute = async ({ url }) => {
       .leftJoin(stageReviews, eq(stageReviews.reviewId, reviews.id))
       .leftJoin(aspectRating, eq(aspectRating.stageReviewId, stageReviews.id))
       .where(where)
-      .groupBy(reviews.id, companies.name, companies.slug, reviews.createdAt)
+      .groupBy(reviews.id, reviews.comment, companies.name, companies.slug, reviews.createdAt)
       .orderBy(sql`${reviews.createdAt} desc`)
       .limit(limit)
       .offset(offset);
@@ -84,7 +85,7 @@ export const POST: APIRoute = async ({ request }) => {
     const result = await db.transaction(async (tx) => {
       const [review] = await tx
         .insert(reviews)
-        .values({ companyId: parsed.data.companyId, ipHash })
+        .values({ companyId: parsed.data.companyId, ipHash, comment: parsed.data.comment })
         .returning({ id: reviews.id });
 
       for (const sr of parsed.data.stageReviews) {
