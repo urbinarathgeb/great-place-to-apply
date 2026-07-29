@@ -1,0 +1,61 @@
+---
+export interface Props {
+  page: number;
+  totalPages: number;
+  baseUrl: string;
+  class?: string;
+}
+const { page, totalPages, baseUrl, class: className } = Astro.props;
+const prevUrl = page > 1 ? `${baseUrl}?page=${page - 1}` : null;
+const nextUrl = page < totalPages ? `${baseUrl}?page=${page + 1}` : null;
+
+const pages: (number | 'ellipsis')[] = [];
+if (totalPages <= 7) {
+  for (let i = 1; i <= totalPages; i++) pages.push(i);
+} else {
+  pages.push(1);
+  if (page > 3) pages.push('ellipsis');
+  const start = Math.max(2, page - 1);
+  const end = Math.min(totalPages - 1, page + 1);
+  for (let i = start; i <= end; i++) pages.push(i);
+  if (page < totalPages - 2) pages.push('ellipsis');
+  pages.push(totalPages);
+}
+
+const baseBtn = 'inline-flex items-center justify-center h-8 w-8 rounded-md text-sm';
+const activeBtn = `${baseBtn} bg-primary text-primary-foreground`;
+const inactiveBtn = `${baseBtn} border border-input bg-background hover:bg-accent`;
+const disabledBtn = `${baseBtn} text-muted-foreground opacity-50 cursor-default`;
+const ellipsisBtn = `${baseBtn} text-muted-foreground cursor-default`;
+---
+
+{
+  totalPages > 1 && (
+    <nav class={`flex items-center justify-center gap-1 ${className ?? ''}`}>
+      {prevUrl ? (
+        <a href={prevUrl} class={inactiveBtn}>←</a>
+      ) : (
+        <span class={disabledBtn}>←</span>
+      )}
+
+      {pages.map((p) =>
+        p === 'ellipsis' ? (
+          <span class={ellipsisBtn}>…</span>
+        ) : (
+          <a
+            href={`${baseUrl}?page=${p}`}
+            class={p === page ? activeBtn : inactiveBtn}
+          >
+            {p}
+          </a>
+        )
+      )}
+
+      {nextUrl ? (
+        <a href={nextUrl} class={inactiveBtn}>→</a>
+      ) : (
+        <span class={disabledBtn}>→</span>
+      )}
+    </nav>
+  )
+}
