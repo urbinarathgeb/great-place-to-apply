@@ -12,5 +12,5 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
   },
-  integrations: [vue(), dbCheck()],
+  integrations: [vue({ devtools: false }), dbCheck()],
 });
