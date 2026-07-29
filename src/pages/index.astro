@@ -1,7 +1,72 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import Layout from '../layouts/Layout.astro'
+import TopCompanyCard from '@/components/ui/TopCompanyCard.astro'
+import HomeSearch from '@/components/vue/HomeSearch.vue'
+import { db } from '@/db'
+import { companies } from '@/db/schema/companies.schema'
+import { categories } from '@/db/schema/categories.schema'
+import { reviews } from '@/db/schema/reviews.schema'
+import { stageReviews } from '@/db/schema/stage-reviews.schema'
+import { aspectRating } from '@/db/schema/aspect-rating.schema'
+import { eq, sql } from 'drizzle-orm'
+
+const allCompanies = await db
+  .select({
+    id: companies.id,
+    name: companies.name,
+    slug: companies.slug,
+    logoUrl: companies.logoUrl,
+    categoryName: categories.name,
+    categorySlug: categories.slug,
+    reviewsCount: sql<number>`count(distinct ${reviews.id})::int`,
+    avgScore: sql<string>`coalesce(avg(${aspectRating.score})::numeric(3,2), '0')`,
+  })
+  .from(companies)
+  .leftJoin(categories, eq(companies.categoryId, categories.id))
+  .leftJoin(reviews, eq(reviews.companyId, companies.id))
+  .leftJoin(stageReviews, eq(stageReviews.reviewId, reviews.id))
+  .leftJoin(aspectRating, eq(aspectRating.stageReviewId, stageReviews.id))
+  .groupBy(companies.id, categories.name, categories.slug)
+  .orderBy(companies.name)
+
+const top5 = allCompanies
+  .filter((c) => c.reviewsCount > 0)
+  .sort((a, b) => parseFloat(b.avgScore) - parseFloat(a.avgScore))
+  .slice(0, 5)
 ---
 
-<Layout>
+<Layout title="Great Place To Apply — Reviews anónimas de procesos de selección" description="Descubre cómo es el proceso de selección en empresas de Chile. Reviews anónimas, puntuaciones y más." wide>
+  <section class="py-12 md:py-20">
+    <div class="text-center max-w-2xl mx-auto mb-12">
+      <h1 class="text-3xl md:text-4xl font-heading font-bold tracking-tight text-foreground">
+        ¿Cómo es el proceso de selección?
+      </h1>
+      <p class="mt-4 text-base text-muted-foreground leading-relaxed">
+        Reviews anónimas de procesos de selección en empresas de Chile. 
+        Comparte tu experiencia y ayuda a otros a prepararse mejor.
+      </p>
+    </div>
 
+    <HomeSearch companies={allCompanies} client:load />
+  </section>
+
+  <section class="pb-12 md:pb-20">
+    <div class="flex items-center justify-between mb-8">
+      <h2 class="text-xl font-heading font-semibold text-foreground">
+        Mejores rankeadas
+      </h2>
+    </div>
+
+    {top5.length > 0 ? (
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {top5.map((c, i) => (
+          <TopCompanyCard company={c} rank={i + 1} />
+        ))}
+      </div>
+    ) : (
+      <p class="text-center text-muted-foreground py-12">
+        Aún no hay reseñas. Sé el primero en escribir una.
+      </p>
+    )}
+  </section>
 </Layout>

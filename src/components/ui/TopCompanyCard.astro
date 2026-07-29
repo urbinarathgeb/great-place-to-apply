@@ -1,0 +1,57 @@
+---
+import Badge from './Badge.astro'
+import StarRating from './StarRating.astro'
+
+interface Company {
+  id: string
+  name: string
+  slug: string
+  categoryName: string | null
+  reviewsCount: number
+  avgScore: string
+}
+
+export interface Props {
+  company: Company
+  rank: number
+}
+
+const { company, rank } = Astro.props
+
+const medals = ['🥇', '🥈', '🥉', '', '']
+const rankBg = rank <= 3 ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+
+const score = parseFloat(company.avgScore)
+const scoreColor = score >= 4 ? 'text-green-600' : score >= 3 ? 'text-amber-600' : 'text-red-500'
+---
+
+<a
+  href={`/companies/${company.slug}`}
+  class="flex flex-col items-center text-center rounded-xl border border-primary/60 bg-white/55 text-card-foreground shadow-sm p-7 md:p-8 backdrop-blur-sm hover:shadow-lg hover:border-primary hover:scale-[1.02] transition-all duration-125"
+>
+  <span class={`flex items-center justify-center w-12 h-12 rounded-full text-lg font-bold shrink-0 mb-4 ${rankBg}`}>
+    {rank}
+  </span>
+
+  {medals[rank - 1] && (
+    <span class="text-2xl -mt-2 mb-1">{medals[rank - 1]}</span>
+  )}
+
+  <h3 class="font-heading text-lg md:text-xl font-semibold text-foreground leading-tight">
+    {company.name}
+  </h3>
+
+  {company.categoryName && (
+    <Badge variant="secondary" class="mt-2">{company.categoryName}</Badge>
+  )}
+
+  <p class={`text-4xl font-bold tabular-nums mt-5 ${scoreColor}`}>
+    {company.avgScore}
+  </p>
+
+  <StarRating score={score} size={20} class="mt-2" />
+
+  <p class="mt-4 text-sm text-muted-foreground">
+    {company.reviewsCount} {company.reviewsCount === 1 ? 'review' : 'reviews'}
+  </p>
+</a>
