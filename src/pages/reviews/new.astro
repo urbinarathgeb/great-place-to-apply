@@ -1,0 +1,35 @@
+---
+import Layout from '@/layouts/Layout.astro'
+import ReviewForm from '@/components/vue/ReviewForm.vue'
+import { db } from '@/db'
+import { companies } from '@/db/schema/companies.schema'
+import { categories } from '@/db/schema/categories.schema'
+import { processStages } from '@/db/schema/process-stages.schema'
+import { eq } from 'drizzle-orm'
+
+const allCompanies = await db
+  .select({
+    id: companies.id,
+    name: companies.name,
+    slug: companies.slug,
+    categoryName: categories.name,
+  })
+  .from(companies)
+  .leftJoin(categories, eq(companies.categoryId, categories.id))
+  .orderBy(companies.name)
+
+const stages = await db
+  .select({ id: processStages.id, name: processStages.name })
+  .from(processStages)
+  .orderBy(processStages.id)
+---
+
+<Layout title="Escribir review — Great Place To Apply">
+  <section class="py-8 md:py-12 max-w-2xl mx-auto">
+    <h1 class="text-2xl font-heading font-bold text-foreground mb-8">
+      Escribir review
+    </h1>
+
+    <ReviewForm companies={allCompanies} stages={stages} client:load />
+  </section>
+</Layout>
