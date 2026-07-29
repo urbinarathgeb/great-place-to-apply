@@ -98,6 +98,7 @@ async function seed() {
   const seedReviews = [
     {
       companySlug: "latam-airlines",
+      comment: "Proceso ágil y bien estructurado. En menos de un mes pasé por 3 etapas. Recibí feedback en cada etapa y la comunicación fue clara. Recomendado.",
       stages: [
         {
           stageSlug: "postulacion",
@@ -129,6 +130,7 @@ async function seed() {
     },
     {
       companySlug: "falabella",
+      comment: "Proceso lento y con poca comunicación. Postulé, tuve una entrevista y luego silencio total. Nunca recibí respuesta sobre el resultado.",
       stages: [
         {
           stageSlug: "postulacion",
@@ -159,11 +161,11 @@ async function seed() {
       continue;
     }
 
-    await db.transaction(async (tx) => {
-      const [review] = await tx
-        .insert(reviews)
-        .values({ companyId, ipHash: "seed" })
-        .returning({ id: reviews.id });
+      await db.transaction(async (tx) => {
+        const [review] = await tx
+          .insert(reviews)
+          .values({ companyId, ipHash: "seed", comment: reviewData.comment })
+          .returning({ id: reviews.id });
 
       for (const sr of reviewData.stages) {
         const stageId = stageBySlug.get(sr.stageSlug);

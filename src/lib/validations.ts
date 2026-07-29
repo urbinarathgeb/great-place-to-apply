@@ -10,6 +10,7 @@ export const createCompanySchema = z.object({
 
 export const createReviewSchema = z.object({
   companyId: z.string().uuid("companyId debe ser un UUID válido"),
+  comment: z.string().min(1, "El comentario general es requerido"),
   stageReviews: z.array(z.object({
     stageId: z.number().int().positive(),
     comment: z.string().min(10, "El comentario debe tener al menos 10 caracteres").max(2000),

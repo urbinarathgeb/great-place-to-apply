@@ -5,5 +5,6 @@ export const reviews = snakeCase.table('reviews', {
 	id: uuid().primaryKey().defaultRandom(),
 	companyId: uuid().references(() => companies.id).notNull(),
 	ipHash: varchar({ length: 64 }),
+	comment: text().notNull(),
 	createdAt: timestamp().defaultNow().notNull(),
 })
