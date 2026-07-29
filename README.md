@@ -79,7 +79,15 @@ pnpm dev
 
 ---
 
-## API Endpoints
+## API REST
+
+> Las rutas `/api/*` fueron creadas como herramienta de desarrollo y testing.
+> Permiten probar la lógica de negocio con `curl` o los archivos `requests/*.http`
+> sin renderizar HTML. **No están diseñadas para consumo externo** (no hay
+> autenticación, rate limiting, ni documentación OpenAPI).
+>
+> Las páginas SSR (`/`, `/companies`, `/reviews`, etc.) consumen la base de
+> datos directamente a través de Drizzle, no llaman a la API.
 
 ### Companies
 
@@ -122,7 +130,7 @@ El esquema actual tiene 6 tablas:
 | `categories` | Categorías de empresas (Minería, Banca, Retail, etc.) |
 | `companies` | Empresas con slug, logoUrl y FK a categories |
 | `process_stages` | Etapas del proceso de selección (Postulación, Entrevista, etc.) |
-| `reviews` | Contenedor de una reseña anónima (companyId, ipHash, createdAt) |
+| `reviews` | Contenedor de una reseña anónima (companyId, ipHash, comment, createdAt) |
 | `stage_reviews` | Comentario + FK a review y process_stage (una review tiene N stage_reviews) |
 | `aspect_rating` | Ratings por aspecto (rapidez, feedback, trato, transparencia) vinculados a un stage_review |
 
@@ -160,6 +168,11 @@ El esquema actual tiene 6 tablas:
 │   │   │   │   └── index.ts
 │   │   │   └── categories/
 │   │   │       └── index.ts
+│   │   ├── companies/
+│   │   │   ├── index.astro
+│   │   │   └── [slug].astro
+│   │   ├── reviews/
+│   │   │   └── [id].astro
 │   │   └── index.astro
 │   └── styles/
 ├── requests/                  # Archivos .http para probar la API
