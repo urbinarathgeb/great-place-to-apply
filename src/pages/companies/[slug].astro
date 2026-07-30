@@ -90,7 +90,7 @@ const stageDistribution = await db
           </a>
         )}
       </div>
-      <Button href="/reviews/new" size="sm">Escribir review</Button>
+      <Button href={`/reviews/new?company=${slug}`} size="sm">Escribir review</Button>
     </div>
 
     <!-- Aspect averages -->
@@ -149,7 +149,7 @@ const stageDistribution = await db
     ) : (
       <div class="text-center py-12 rounded-xl border bg-card">
         <p class="text-muted-foreground">Aún no hay reseñas para esta empresa.</p>
-        <Button href="/reviews/new" class="mt-4">Escribir la primera review</Button>
+        <Button href={`/reviews/new?company=${slug}`} class="mt-4">Escribir la primera review</Button>
       </div>
     )}
   </section>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, reactive, watch } from 'vue'
+import { ref, computed, reactive, watch, onMounted } from 'vue'
+import ToastContainer from './ToastContainer.vue'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -21,6 +22,7 @@ import {
   ComboboxViewport,
 } from '@/components/ui/combobox'
 import { XIcon, CheckIcon } from '@lucide/vue'
+import { useToast } from '@/lib/useToast'
 
 interface Company {
   id: string
@@ -34,7 +36,17 @@ interface Stage {
   name: string
 }
 
-const props = defineProps<{ companies: Company[]; stages: Stage[] }>()
+const props = defineProps<{
+  companies: Company[]
+  stages: Stage[]
+  initialCompanyId?: string | null
+}>()
+
+onMounted(() => {
+  if (props.initialCompanyId) {
+    selectedCompanyId.value = props.initialCompanyId
+  }
+})
 
 const aspects = ['rapidez', 'feedback', 'transparencia', 'trato']
 
@@ -44,8 +56,8 @@ const companyQuery = ref('')
 const showDropdown = ref(false)
 const comment = ref('')
 const submitting = ref(false)
-const error = ref('')
 const fieldErrors = ref<Record<string, string[]>>({})
+const { toasts, show } = useToast()
 
 watch(selectedCompanyId, (id) => {
   if (id) {
@@ -120,7 +132,6 @@ function availableStages(excludeIdx: number): Stage[] {
 }
 
 async function submit() {
-  error.value = ''
   fieldErrors.value = {}
 
   if (!selectedCompany.value) {
@@ -161,13 +172,14 @@ async function submit() {
         }
         fieldErrors.value = grouped
       }
-      error.value = data.error || 'Error al enviar la review'
+      show(data.error || 'Error al enviar la review', 'error')
       return
     }
 
-    window.location.href = `/reviews/${data.id}`
+    show('Review enviada con éxito', 'success', 4000)
+    setTimeout(() => { window.location.href = `/reviews/${data.id}` }, 3000)
   } catch {
-    error.value = 'Error de conexión. Intenta nuevamente.'
+    show('Error de conexión. Intenta nuevamente.', 'error')
   } finally {
     submitting.value = false
   }
@@ -344,10 +356,6 @@ async function submit() {
       </div>
     </div>
 
-    <div v-if="error" class="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-      {{ error }}
-    </div>
-
     <Button
       type="submit"
       class="w-full h-11"
@@ -357,4 +365,5 @@ async function submit() {
       {{ submitting ? 'Enviando...' : 'Enviar review' }}
     </Button>
   </form>
+  <ToastContainer :toasts="toasts" />
 </template>

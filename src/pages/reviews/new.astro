@@ -22,6 +22,11 @@ const stages = await db
   .select({ id: processStages.id, name: processStages.name })
   .from(processStages)
   .orderBy(processStages.id)
+
+const initialSlug = Astro.url.searchParams.get('company')
+const initialCompany = initialSlug
+  ? allCompanies.find((c) => c.slug === initialSlug) ?? null
+  : null
 ---
 
 <Layout title="Escribir review — Great Place To Apply">
@@ -30,6 +35,11 @@ const stages = await db
       Escribir review
     </h1>
 
-    <ReviewForm companies={allCompanies} stages={stages} client:load />
+    <ReviewForm
+      companies={allCompanies}
+      stages={stages}
+      initial-company-id={initialCompany?.id ?? null}
+      client:load
+    />
   </section>
 </Layout>

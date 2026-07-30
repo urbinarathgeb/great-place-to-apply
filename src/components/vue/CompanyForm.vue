@@ -1,14 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { useToast } from '@/lib/useToast'
+import ToastContainer from './ToastContainer.vue'
 
 interface Category {
   id: number
@@ -22,12 +15,21 @@ const name = ref('')
 const website = ref('')
 const categoryId = ref<number | null>(null)
 const submitting = ref(false)
-const error = ref('')
 const fieldErrors = ref<Record<string, string[]>>({})
+const { toasts, show } = useToast()
 
 async function submit() {
-  error.value = ''
   fieldErrors.value = {}
+
+  if (!name.value.trim()) {
+    fieldErrors.value = { name: ['El nombre es obligatorio'] }
+    return
+  }
+
+  if (!categoryId.value) {
+    fieldErrors.value = { categoryId: ['Selecciona una categoría'] }
+    return
+  }
 
   const payload = {
     name: name.value.trim(),
@@ -56,17 +58,19 @@ async function submit() {
         }
         fieldErrors.value = grouped
       }
-      error.value = data.error || 'Error al crear la empresa'
       if (data.slug) {
-        window.location.href = `/companies/${data.slug}`
+        show('Esta empresa ya existe, redirigiendo...', 'info')
+        setTimeout(() => { window.location.href = `/companies/${data.slug}` }, 1500)
         return
       }
+      show(data.error || 'Error al crear la empresa', 'error')
       return
     }
 
-    window.location.href = `/companies/${data.slug}`
+    show('Empresa creada con éxito', 'success', 4000)
+    setTimeout(() => { window.location.href = '/' }, 3000)
   } catch {
-    error.value = 'Error de conexión. Intenta nuevamente.'
+    show('Error de conexión. Intenta nuevamente.', 'error')
   } finally {
     submitting.value = false
   }
@@ -112,46 +116,36 @@ async function submit() {
 
     <!-- Category -->
     <div class="flex flex-col gap-2">
-      <label class="text-sm font-medium text-foreground">
+      <label for="category" class="text-sm font-medium text-foreground">
         Categoría <span class="text-destructive">*</span>
       </label>
-      <Select v-model="categoryId">
-        <SelectTrigger>
-          <SelectValue placeholder="Seleccionar categoría" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem
-              v-for="c in props.categories"
-              :key="c.id"
-              :value="c.id"
-            >
-              {{ c.name }}
-            </SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select>
+      <select
+        id="category"
+        v-model="categoryId"
+        class="border-input focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border bg-transparent px-3 py-2 text-base transition-colors focus-visible:ring-3 md:text-sm w-full outline-none placeholder:text-muted-foreground"
+      >
+        <option :value="null" disabled>Seleccionar categoría</option>
+        <option
+          v-for="c in props.categories"
+          :key="c.id"
+          :value="c.id"
+        >
+          {{ c.name }}
+        </option>
+      </select>
       <p v-if="fieldErrors.categoryId" class="text-sm text-destructive">
         {{ fieldErrors.categoryId[0] }}
       </p>
     </div>
 
-    <!-- Error general -->
-    <div
-      v-if="error"
-      class="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive"
-    >
-      {{ error }}
-    </div>
-
     <!-- Submit -->
-    <Button
+    <button
       type="submit"
-      class="w-full h-11"
-      size="lg"
       :disabled="submitting"
+      class="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-4 py-2 w-full"
     >
       {{ submitting ? 'Creando...' : 'Crear empresa' }}
-    </Button>
+    </button>
   </form>
+  <ToastContainer :toasts="toasts" />
 </template>
