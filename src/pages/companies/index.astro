@@ -96,9 +96,21 @@ const results = await db
       </div>
     ) : (
       <div class="text-center py-16">
-        <p class="text-muted-foreground font-medium">Sin resultados</p>
-        <p class="text-sm text-muted-foreground/60 mt-1">Intenta con otro término de búsqueda</p>
-        <Button href="/" class="mt-6">Volver al inicio</Button>
+        {q ? (
+          <>
+            <p class="text-muted-foreground font-medium">No encontramos &ldquo;{q}&rdquo;</p>
+            <p class="text-sm text-muted-foreground/60 mt-1">¿No encuentras tu empresa?</p>
+          </>
+        ) : (
+          <>
+            <p class="text-muted-foreground font-medium">Aún no hay empresas registradas</p>
+            <p class="text-sm text-muted-foreground/60 mt-1">Sé el primero en agregar una</p>
+          </>
+        )}
+        <div class="flex items-center justify-center gap-3 mt-6">
+          <Button href="/companies/new">Agregar empresa</Button>
+          <Button href="/" variant="outline">Volver al inicio</Button>
+        </div>
       </div>
     )}
   </section>
