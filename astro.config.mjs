@@ -7,6 +7,7 @@ import dbCheck from './src/integrations/db-check';
 
 // https://astro.build/config
 export default defineConfig({
+  site: 'https://greatplacetoapply.cl',
   output: 'server',
   adapter: vercel(),
   vite: {
