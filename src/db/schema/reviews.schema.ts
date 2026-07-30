@@ -1,4 +1,4 @@
-import { uuid, text, varchar, timestamp, snakeCase } from 'drizzle-orm/pg-core'
+import { uuid, text, varchar, timestamp, index, snakeCase } from 'drizzle-orm/pg-core'
 import { companies } from "@/db/schema/companies.schema";
 
 export const reviews = snakeCase.table('reviews', {
@@ -7,4 +7,6 @@ export const reviews = snakeCase.table('reviews', {
 	ipHash: varchar({ length: 64 }),
 	comment: text().notNull(),
 	createdAt: timestamp().defaultNow().notNull(),
-})
+}, (table) => ({
+	companyCreatedIdx: index('reviews_company_created_idx').on(table.companyId, table.createdAt),
+}))

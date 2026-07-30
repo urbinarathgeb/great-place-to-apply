@@ -1,4 +1,4 @@
-import { uuid, varchar, text, integer, snakeCase } from "drizzle-orm/pg-core";
+import { uuid, varchar, text, integer, index, snakeCase } from "drizzle-orm/pg-core";
 import { categories } from "@/db/schema/categories.schema";
 
 export const companies = snakeCase.table("companies", {
@@ -8,4 +8,6 @@ export const companies = snakeCase.table("companies", {
 	website: text(),
 	logoUrl: text(),
 	categoryId: integer().references(() => categories.id).notNull(),
-});
+}, (table) => ({
+	categoryIdx: index("companies_category_idx").on(table.categoryId),
+}));
