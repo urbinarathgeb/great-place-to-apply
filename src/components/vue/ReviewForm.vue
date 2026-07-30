@@ -175,9 +175,9 @@ async function submit() {
 </script>
 
 <template>
-  <form @submit.prevent="submit" class="space-y-6" novalidate>
+  <form @submit.prevent="submit" class="flex flex-col gap-6" novalidate>
     <!-- Company -->
-    <div class="space-y-2">
+    <div class="flex flex-col gap-2">
       <label class="text-sm font-medium text-foreground">Empresa</label>
       <Combobox
         v-model="selectedCompanyId"
@@ -233,7 +233,7 @@ async function submit() {
     </div>
 
     <!-- General comment -->
-    <div class="space-y-2">
+    <div class="flex flex-col gap-2">
       <label for="comment" class="text-sm font-medium text-foreground">Comentario general</label>
       <textarea
         id="comment"
@@ -248,7 +248,7 @@ async function submit() {
     </div>
 
     <!-- Stages -->
-    <div class="space-y-4">
+    <div class="flex flex-col gap-4">
       <div class="flex items-center justify-between">
         <h2 class="text-sm font-semibold text-foreground">Etapas del proceso</h2>
         <Button
@@ -265,7 +265,7 @@ async function submit() {
       <div
         v-for="(stage, i) in stages"
         :key="i"
-        class="rounded-xl border bg-card p-5 space-y-4"
+        class="rounded-xl border bg-card p-5 flex flex-col gap-4"
       >
         <div class="flex items-center justify-between">
           <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Etapa {{ i + 1 }}</span>
