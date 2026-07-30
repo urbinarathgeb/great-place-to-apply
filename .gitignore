@@ -30,6 +30,8 @@ pnpm-debug.log*
 
 # agents
 .opencode
+.agents
+skills-lock.json
 
 #others
 BACKLOG.md
