@@ -5,7 +5,7 @@ import { companies } from "./schema/companies.schema";
 import { processStages } from "./schema/process-stages.schema";
 import { reviews } from "./schema/reviews.schema";
 import { stageReviews } from "./schema/stage-reviews.schema";
-import { aspectRating } from "./schema/aspect-rating.schema";
+import { aspectRating, ASPECTS } from "./schema/aspect-rating.schema";
 
 config({ path: ".env.development" });
 
@@ -95,7 +95,9 @@ async function seed() {
   const companyBySlug = new Map(allCompanies.map((c) => [c.slug, c.id]));
   const stageBySlug = new Map(allStages.map((s) => [s.slug, s.id]));
 
-  const seedReviews = [
+  type SeedRating = { aspectName: (typeof ASPECTS)[number]; score: string };
+
+  const seedReviews: { companySlug: string; comment: string; stages: { stageSlug: string; comment: string; ratings: SeedRating[] }[] }[] = [
     {
       companySlug: "latam-airlines",
       comment: "Proceso ágil y bien estructurado. En menos de un mes pasé por 3 etapas. Recibí feedback en cada etapa y la comunicación fue clara. Recomendado.",

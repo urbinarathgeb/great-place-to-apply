@@ -1,0 +1,2 @@
+CREATE TYPE "aspect_name" AS ENUM('rapidez', 'feedback', 'transparencia', 'trato');--> statement-breakpoint
+ALTER TABLE "aspect_rating" ALTER COLUMN "aspect_name" SET DATA TYPE "aspect_name" USING "aspect_name"::"aspect_name";

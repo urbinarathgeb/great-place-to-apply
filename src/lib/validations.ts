@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { ASPECTS } from "@/db/schema/aspect-rating.schema";
 
-const ALLOWED_ASPECTS = ["rapidez", "feedback", "transparencia", "trato"] as const;
+const ALLOWED_ASPECTS = ASPECTS;
 
 export const createCompanySchema = z.object({
   name: z.string().min(2, "Nombre muy corto").max(255),
