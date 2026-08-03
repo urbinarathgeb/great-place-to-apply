@@ -89,7 +89,7 @@ function onFocus() {
         v-model="query"
         type="search"
         placeholder="Buscar empresa..."
-        class="w-full h-12 pl-12 pr-4 rounded-xl border-2 border-border bg-card text-foreground text-base placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+        class="w-full h-14 pl-12 pr-4 rounded-full bg-white/70 backdrop-blur border border-white/60 text-foreground text-base placeholder:text-muted-foreground shadow-[0_4px_20px_rgba(0,0,0,0.06)] focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/15 transition-all"
         @input="onInput"
         @keydown="onKeydown"
         @blur="onBlur"
@@ -100,7 +100,7 @@ function onFocus() {
     <Transition name="dropdown">
       <div
         v-if="showDropdown && filtered.length > 0"
-        class="absolute top-full left-0 right-0 mt-2 rounded-xl border bg-card shadow-lg z-50 overflow-hidden"
+        class="absolute top-full left-0 right-0 mt-2 rounded-2xl bg-white/90 backdrop-blur-xl border border-white/60 shadow-[0_20px_50px_rgba(0,0,0,0.08)] z-50 overflow-hidden"
       >
         <button
           v-for="(c, i) in filtered"

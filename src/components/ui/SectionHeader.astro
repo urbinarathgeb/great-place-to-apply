@@ -1,0 +1,39 @@
+---
+interface Props {
+  title: string
+  subtitle?: string
+  linkLabel?: string
+  linkHref?: string
+  align?: 'end' | 'center'
+}
+
+const { title, subtitle, linkLabel, linkHref, align = 'end' } = Astro.props
+
+const alignClasses = align === 'center' ? 'text-center' : 'text-left'
+const linkAlign = align === 'center' ? 'mt-6 justify-center' : 'sm:mt-0'
+---
+
+<div class={`flex flex-col justify-between ${align === 'center' ? 'items-center' : 'items-start sm:flex-row sm:items-end'} gap-4`}>
+  <div class={alignClasses}>
+    <h2 class="font-heading text-2xl md:text-3xl font-bold tracking-tight text-primary">
+      {title}
+    </h2>
+    {subtitle && (
+      <p class="mt-2 text-base text-muted-foreground leading-relaxed max-w-2xl">
+        {subtitle}
+      </p>
+    )}
+  </div>
+
+  {linkLabel && linkHref && (
+    <a
+      href={linkHref}
+      class={`inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline decoration-2 underline-offset-4 shrink-0 ${linkAlign}`}
+    >
+      {linkLabel}
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12h14M12 5l7 7-7 7" />
+      </svg>
+    </a>
+  )}
+</div>
