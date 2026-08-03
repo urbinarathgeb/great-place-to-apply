@@ -23,6 +23,7 @@ const containerClass = wide ? 'max-w-7xl' : 'max-w-5xl'
     {description && <meta name="description" content={description} />}
   </head>
   <body class="min-h-screen flex flex-col bg-background text-foreground font-sans antialiased">
+    <div class="aurora-bg fixed inset-0 -z-10 pointer-events-none" aria-hidden="true"></div>
     <Header />
     <main class={`flex-1 w-full mx-auto px-4 md:px-6 lg:px-8 ${containerClass}`}>
       <slot />

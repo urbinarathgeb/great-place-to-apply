@@ -6,10 +6,10 @@ export interface Props {
 const { variant = 'default', class: className } = Astro.props;
 
 const variants: Record<string, string> = {
-  default: 'bg-accent text-accent-foreground',
-  secondary: 'bg-secondary text-secondary-foreground',
-  destructive: 'bg-destructive text-destructive-foreground',
-  outline: 'text-foreground border',
+  default: 'bg-secondary/10 text-secondary',
+  secondary: 'bg-primary/10 text-primary',
+  destructive: 'bg-destructive/10 text-destructive',
+  outline: 'text-muted-foreground border border-border',
 };
 ---
 

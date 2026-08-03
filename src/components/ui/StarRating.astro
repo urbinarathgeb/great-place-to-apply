@@ -13,10 +13,10 @@ const stars = Array.from({ length: max }, (_, i) => i + 1);
   {stars.map((star) => {
     const fill =
       score >= star
-        ? 'text-accent fill-accent'
+        ? 'text-secondary fill-secondary'
         : score >= star - 0.5
-          ? 'text-accent fill-accent opacity-50'
-          : 'fill-none stroke-accent/30 text-accent';
+          ? 'text-secondary fill-secondary opacity-50'
+          : 'fill-none stroke-secondary/30 text-secondary';
     return (
       <svg
         width={iconSize}
