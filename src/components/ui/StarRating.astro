@@ -4,19 +4,23 @@ export interface Props {
   max?: number;
   class?: string;
   size?: number;
+  tone?: 'primary' | 'secondary';
 }
-const { score, max = 5, class: className, size: iconSize = 16 } = Astro.props;
+const { score, max = 5, class: className, size: iconSize = 16, tone = 'secondary' } = Astro.props;
 const stars = Array.from({ length: max }, (_, i) => i + 1);
+const activeFill = tone === 'primary' ? 'text-primary fill-primary' : 'text-secondary fill-secondary';
+const emptyStroke = tone === 'primary' ? 'fill-none stroke-primary/30 text-primary' : 'fill-none stroke-secondary/30 text-secondary';
+const halfFill = tone === 'primary' ? 'text-primary fill-primary opacity-50' : 'text-secondary fill-secondary opacity-50';
 ---
 
 <div class={`flex items-center gap-0.5 ${className ?? ''}`} aria-label={`${score} de ${max} estrellas`} role="img">
   {stars.map((star) => {
     const fill =
       score >= star
-        ? 'text-secondary fill-secondary'
+        ? activeFill
         : score >= star - 0.5
-          ? 'text-secondary fill-secondary opacity-50'
-          : 'fill-none stroke-secondary/30 text-secondary';
+          ? halfFill
+          : emptyStroke;
     return (
       <svg
         width={iconSize}

@@ -3,9 +3,11 @@ export interface Props {
   variant?: 'default' | 'secondary' | 'ghost' | 'outline' | 'destructive';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   href?: string;
+  target?: string;
+  rel?: string;
   class?: string;
 }
-const { variant = 'default', size = 'default', href, class: className } = Astro.props;
+const { variant = 'default', size = 'default', href, target, rel, class: className } = Astro.props;
 
 const variants: Record<string, string> = {
   default: 'btn-gradient text-white shadow-[0_4px_14px_rgba(79,70,229,0.25)] hover:shadow-[0_6px_24px_rgba(79,70,229,0.4)] hover:-translate-y-0.5',
@@ -27,7 +29,7 @@ const classes = `${base} ${variants[variant]} ${sizes[size]} ${className}`;
 ---
 {
   href ? (
-    <a href={href} class={classes}>
+    <a href={href} target={target} rel={rel} class={classes}>
       <slot />
     </a>
   ) : (
