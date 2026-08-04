@@ -54,6 +54,8 @@ const selectedCompanyId = ref<string | null>(null)
 const selectedCompany = ref<Company | null>(null)
 const companyQuery = ref('')
 const showDropdown = ref(false)
+const role = ref('')
+const recommends = ref<boolean | null>(null)
 const comment = ref('')
 const submitting = ref(false)
 const fieldErrors = ref<Record<string, string[]>>({})
@@ -139,8 +141,20 @@ async function submit() {
     return
   }
 
+  if (!role.value.trim()) {
+    fieldErrors.value = { role: ['El rol o puesto es obligatorio'] }
+    return
+  }
+
+  if (recommends.value === null) {
+    fieldErrors.value = { recommends: ['Indica si recomendarías esta empresa'] }
+    return
+  }
+
   const payload = {
     companyId: selectedCompany.value.id,
+    role: role.value.trim(),
+    recommends: recommends.value,
     comment: comment.value,
     stageReviews: stages.map((s) => ({
       stageId: s.stageId!,
@@ -241,6 +255,55 @@ async function submit() {
       <p class="text-xs text-muted-foreground">
         ¿No encuentras tu empresa?
         <a href="/companies/new" class="text-primary hover:underline">Créala aquí</a>
+      </p>
+    </div>
+
+    <!-- Role -->
+    <div class="flex flex-col gap-2">
+      <label for="role" class="text-sm font-medium text-foreground">
+        Rol o puesto al que postulaste <span class="text-destructive">*</span>
+      </label>
+      <input
+        id="role"
+        v-model="role"
+        type="text"
+        placeholder="Ej: Analista de Riesgo"
+        class="border-input focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border bg-transparent px-3 py-2 text-base transition-colors focus-visible:ring-3 md:text-sm w-full outline-none placeholder:text-muted-foreground"
+      />
+      <p v-if="fieldErrors.role" class="text-sm text-destructive">
+        {{ fieldErrors.role[0] }}
+      </p>
+    </div>
+
+    <!-- Recommendation -->
+    <div class="flex flex-col gap-2">
+      <span class="text-sm font-medium text-foreground">
+        ¿Recomendarías esta empresa? <span class="text-destructive">*</span>
+      </span>
+      <div class="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          :class="recommends === true
+            ? 'border-primary bg-primary/10 text-primary'
+            : 'border-input text-muted-foreground hover:border-ring hover:text-foreground'"
+          class="rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
+          @click="recommends = recommends === true ? null : true"
+        >
+          Sí, la recomiendo
+        </button>
+        <button
+          type="button"
+          :class="recommends === false
+            ? 'border-destructive bg-destructive/10 text-destructive'
+            : 'border-input text-muted-foreground hover:border-ring hover:text-foreground'"
+          class="rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
+          @click="recommends = recommends === false ? null : false"
+        >
+          No la recomiendo
+        </button>
+      </div>
+      <p v-if="fieldErrors.recommends" class="text-sm text-destructive">
+        {{ fieldErrors.recommends[0] }}
       </p>
     </div>
 

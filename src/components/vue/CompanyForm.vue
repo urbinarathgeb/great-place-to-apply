@@ -13,6 +13,8 @@ const props = defineProps<{ categories: Category[] }>()
 
 const name = ref('')
 const website = ref('')
+const description = ref('')
+const location = ref('')
 const categoryId = ref<number | null>(null)
 const submitting = ref(false)
 const fieldErrors = ref<Record<string, string[]>>({})
@@ -34,6 +36,8 @@ async function submit() {
   const payload = {
     name: name.value.trim(),
     website: website.value.trim() || null,
+    description: description.value.trim() || null,
+    location: location.value.trim() || null,
     categoryId: categoryId.value,
   }
 
@@ -111,6 +115,42 @@ async function submit() {
       />
       <p v-if="fieldErrors.website" class="text-sm text-destructive">
         {{ fieldErrors.website[0] }}
+      </p>
+    </div>
+
+    <!-- Description -->
+    <div class="flex flex-col gap-2">
+      <label for="description" class="text-sm font-medium text-foreground">
+        Descripción
+        <span class="text-muted-foreground font-normal">(opcional)</span>
+      </label>
+      <textarea
+        id="description"
+        v-model="description"
+        rows="3"
+        placeholder="Describe brevemente a qué se dedica la empresa..."
+        class="border-input focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border bg-transparent px-3 py-2 text-base transition-colors focus-visible:ring-3 md:text-sm w-full outline-none placeholder:text-muted-foreground resize-y"
+      />
+      <p v-if="fieldErrors.description" class="text-sm text-destructive">
+        {{ fieldErrors.description[0] }}
+      </p>
+    </div>
+
+    <!-- Location -->
+    <div class="flex flex-col gap-2">
+      <label for="location" class="text-sm font-medium text-foreground">
+        Ubicación
+        <span class="text-muted-foreground font-normal">(opcional)</span>
+      </label>
+      <input
+        id="location"
+        v-model="location"
+        type="text"
+        placeholder="Ej: Santiago, Chile"
+        class="border-input focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border bg-transparent px-3 py-2 text-base transition-colors focus-visible:ring-3 md:text-sm w-full outline-none placeholder:text-muted-foreground"
+      />
+      <p v-if="fieldErrors.location" class="text-sm text-destructive">
+        {{ fieldErrors.location[0] }}
       </p>
     </div>
 
