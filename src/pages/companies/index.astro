@@ -1,22 +1,26 @@
 ---
 import Layout from '@/layouts/Layout.astro'
-import Button from '@/components/ui/Button.astro'
-import Badge from '@/components/ui/Badge.astro'
-import StarRating from '@/components/ui/StarRating.astro'
+import CompanyDirectory from '@/components/vue/CompanyDirectory.vue'
 import { db } from '@/db'
 import { companies } from '@/db/schema/companies.schema'
 import { categories } from '@/db/schema/categories.schema'
 import { reviews } from '@/db/schema/reviews.schema'
 import { stageReviews } from '@/db/schema/stage-reviews.schema'
 import { aspectRating } from '@/db/schema/aspect-rating.schema'
-import { eq, sql, and } from 'drizzle-orm'
+import { eq, sql, and, count } from 'drizzle-orm'
 import { ilikeUnaccent } from '@/lib/search'
 
-const q = Astro.url.searchParams.get('q') || ''
+const LIMIT = 12
+
+const q = Astro.url.searchParams.get('q') ?? ''
+const category = Astro.url.searchParams.get('category') ?? ''
 
 const conditions = []
 if (q) {
   conditions.push(ilikeUnaccent(companies.name, `%${q}%`))
+}
+if (category) {
+  conditions.push(eq(categories.slug, category))
 }
 
 const where = conditions.length > 0 ? and(...conditions) : undefined
@@ -37,6 +41,13 @@ const results = await db
        ORDER BY reviews.created_at DESC
        LIMIT 1)
     `,
+    latestCommentDate: sql<string | null>`
+      (SELECT to_char(reviews.created_at, 'YYYY-MM-DD"T"HH24:MI:SS')
+       FROM reviews
+       WHERE reviews.company_id = ${companies.id}
+       ORDER BY reviews.created_at DESC
+       LIMIT 1)
+    `,
   })
   .from(companies)
   .leftJoin(categories, eq(companies.categoryId, categories.id))
@@ -46,72 +57,55 @@ const results = await db
   .where(where)
   .groupBy(companies.id, categories.name, categories.slug)
   .orderBy(companies.name)
+  .limit(LIMIT)
+
+const [{ total }] = await db
+  .select({ total: count() })
+  .from(companies)
+  .leftJoin(categories, eq(companies.categoryId, categories.id))
+  .where(where)
+
+const allCategories = await db
+  .select({ id: categories.id, name: categories.name, slug: categories.slug })
+  .from(categories)
+  .orderBy(categories.name)
+
+const pagination = {
+  page: 1,
+  limit: LIMIT,
+  total,
+  totalPages: Math.ceil(total / LIMIT),
+}
+
+const title = q
+  ? `Resultados para "${q}" — Great Place To Apply`
+  : 'Empresas — Great Place To Apply'
 ---
 
-<Layout title={q ? `Resultados para "${q}" — Great Place To Apply` : 'Empresas — Great Place To Apply'} wide>
-  <section class="py-8 md:py-12">
-    <div class="flex items-center justify-between mb-8">
-      <div>
-        <h1 class="text-2xl font-heading font-bold text-foreground">Empresas</h1>
-        {q && (
-          <p class="mt-1 text-sm text-muted-foreground">
-            Resultados para &ldquo;{q}&rdquo; &middot; {results.length} {results.length === 1 ? 'empresa' : 'empresas'}
-          </p>
-        )}
-      </div>
-      <Button href="/reviews/new">Escribir review</Button>
+<Layout
+  title={title}
+  description="Explora las empresas mejor valoradas por sus propios empleados. Reviews anónimas de procesos de selección en Chile."
+  wide
+>
+  <section class="pt-12 md:pt-20 pb-16 md:pb-24">
+    <header class="text-center md:text-left max-w-3xl">
+      <h1 class="text-3xl md:text-5xl font-heading font-extrabold tracking-tight text-foreground leading-[1.15]">
+        Descubre tu próximo <span class="text-primary">gran paso.</span>
+      </h1>
+      <p class="mt-4 text-base md:text-lg text-muted-foreground leading-relaxed">
+        Explora las empresas mejor valoradas por sus propios empleados y encuentra el lugar donde tu talento realmente brille.
+      </p>
+    </header>
+
+    <div class="mt-8">
+      <CompanyDirectory
+        companies={results}
+        pagination={pagination}
+        categories={allCategories}
+        initialQ={q}
+        initialCategory={category}
+        client:load
+      />
     </div>
-
-    {results.length > 0 ? (
-      <div class="grid gap-4 sm:grid-cols-2">
-        {results.map((c) => (
-          <a
-            href={`/companies/${c.slug}`}
-            class="block rounded-xl border bg-card text-card-foreground shadow-sm p-5 hover:shadow-md hover:border-primary/20 transition-all"
-          >
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex-1 min-w-0">
-                <h2 class="font-heading text-base font-semibold text-foreground truncate">
-                  {c.name}
-                </h2>
-                {c.categoryName && (
-                  <Badge variant="secondary" class="mt-1.5">{c.categoryName}</Badge>
-                )}
-              </div>
-              <div class="text-right shrink-0">
-                <StarRating score={parseFloat(c.avgScore)} size={14} />
-                <p class="mt-0.5 text-xs text-muted-foreground">{c.reviewsCount} {c.reviewsCount === 1 ? 'review' : 'reviews'}</p>
-              </div>
-            </div>
-
-            {c.latestComment && (
-              <div class="mt-3 border-t pt-3">
-                <p class="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                  &ldquo;{c.latestComment}&rdquo;
-                </p>
-              </div>
-            )}
-          </a>
-        ))}
-      </div>
-    ) : (
-      <div class="text-center py-16">
-        {q ? (
-          <>
-            <p class="text-muted-foreground font-medium">No encontramos &ldquo;{q}&rdquo;</p>
-            <p class="text-sm text-muted-foreground/60 mt-1">¿No encuentras tu empresa?</p>
-          </>
-        ) : (
-          <>
-            <p class="text-muted-foreground font-medium">Aún no hay empresas registradas</p>
-            <p class="text-sm text-muted-foreground/60 mt-1">Sé el primero en agregar una</p>
-          </>
-        )}
-        <div class="flex items-center justify-center gap-3 mt-6">
-          <Button href="/companies/new">Agregar empresa</Button>
-          <Button href="/" variant="outline">Volver al inicio</Button>
-        </div>
-      </div>
-    )}
   </section>
 </Layout>

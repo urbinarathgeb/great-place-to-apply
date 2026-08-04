@@ -11,7 +11,7 @@
 //
 // Respuesta JSON:
 //   {
-//     companies: [{ id, name, slug, logoUrl, categoryName, categorySlug }],
+//     companies: [{ id, name, slug, logoUrl, categoryName, categorySlug, reviewsCount, avgScore, latestComment }],
 //     pagination: { page, limit, total, totalPages }
 //   }
 
@@ -72,6 +72,19 @@ export const GET: APIRoute = async ({ url }) => {
         categorySlug: categories.slug,
         reviewsCount: sql<number>`count(distinct ${reviews.id})::int`,
         avgScore: sql<string>`coalesce(avg(${aspectRating.score})::numeric(3,2), '0')`,
+        latestComment: sql<string | null>`
+          (SELECT comment FROM reviews
+           WHERE reviews.company_id = ${companies.id}
+           ORDER BY reviews.created_at DESC
+           LIMIT 1)
+        `,
+        latestCommentDate: sql<string | null>`
+          (SELECT to_char(reviews.created_at, 'YYYY-MM-DD"T"HH24:MI:SS')
+           FROM reviews
+           WHERE reviews.company_id = ${companies.id}
+           ORDER BY reviews.created_at DESC
+           LIMIT 1)
+        `,
       })
       .from(companies)
       .leftJoin(categories,
