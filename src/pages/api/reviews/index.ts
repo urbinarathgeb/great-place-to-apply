@@ -85,7 +85,7 @@ export const POST: APIRoute = async ({ request }) => {
     const result = await db.transaction(async (tx) => {
       const [review] = await tx
         .insert(reviews)
-        .values({ companyId: parsed.data.companyId, ipHash, comment: parsed.data.comment })
+        .values({ companyId: parsed.data.companyId, ipHash, role: parsed.data.role, recommends: parsed.data.recommends, comment: parsed.data.comment })
         .returning({ id: reviews.id });
 
       for (const sr of parsed.data.stageReviews) {

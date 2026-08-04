@@ -6,11 +6,15 @@ const ALLOWED_ASPECTS = ASPECTS;
 export const createCompanySchema = z.object({
   name: z.string().min(2, "Nombre muy corto").max(255),
   website: z.string().url("URL inválida").optional().nullable(),
+  description: z.string().max(2000, "Descripción muy larga").optional().nullable(),
+  location: z.string().max(255, "Ubicación muy larga").optional().nullable(),
   categoryId: z.number().int().positive("categoryId debe ser un número positivo"),
 });
 
 export const createReviewSchema = z.object({
   companyId: z.string().uuid("companyId debe ser un UUID válido"),
+  role: z.string().min(1, "El rol o puesto es requerido").max(150, "Rol muy largo"),
+  recommends: z.boolean({ message: "Indica si recomendarías la empresa" }),
   comment: z.string().min(1, "El comentario general es requerido"),
   stageReviews: z.array(z.object({
     stageId: z.number().int().positive(),

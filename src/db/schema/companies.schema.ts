@@ -7,6 +7,8 @@ export const companies = snakeCase.table("companies", {
 	slug: varchar({ length: 100 }).unique().notNull(),
 	website: text(),
 	logoUrl: text(),
+	description: text(),
+	location: varchar({ length: 255 }),
 	categoryId: integer().references(() => categories.id).notNull(),
 }, (table) => ({
 	categoryIdx: index("companies_category_idx").on(table.categoryId),

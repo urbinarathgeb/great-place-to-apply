@@ -178,7 +178,7 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const { name, website, categoryId } = parsed.data;
+    const { name, website, description, location, categoryId } = parsed.data;
 
     // ── PASO 2: Generar slug ─────────────────────────────────────
     // "Banco de Chile" → "banco-de-chile"
@@ -207,7 +207,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const [created] = await db
       .insert(companies)
-      .values({ name, slug, website: website || null, categoryId })
+      .values({ name, slug, website: website || null, description: description || null, location: location || null, categoryId })
       .returning({ id: companies.id, name: companies.name, slug: companies.slug });
 
     // ── PASO 5: Retornar respuesta ──────────────────────────────
