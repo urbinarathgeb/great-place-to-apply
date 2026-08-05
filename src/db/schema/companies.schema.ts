@@ -6,6 +6,7 @@ export const companies = snakeCase.table("companies", {
 	name: varchar({ length: 255 }).notNull(),
 	slug: varchar({ length: 100 }).unique().notNull(),
 	website: text(),
+	careersUrl: text(),
 	logoUrl: text(),
 	description: text(),
 	location: varchar({ length: 255 }),
