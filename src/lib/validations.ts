@@ -6,6 +6,7 @@ const ALLOWED_ASPECTS = ASPECTS;
 export const createCompanySchema = z.object({
   name: z.string().min(2, "Nombre muy corto").max(255),
   website: z.string().url("URL inválida").optional().nullable(),
+  careersUrl: z.string().url("URL inválida").optional().nullable(),
   description: z.string().max(2000, "Descripción muy larga").optional().nullable(),
   location: z.string().max(255, "Ubicación muy larga").optional().nullable(),
   categoryId: z.number().int().positive("categoryId debe ser un número positivo"),
