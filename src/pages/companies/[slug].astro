@@ -20,6 +20,7 @@ const [company] = await db
     name: companies.name,
     slug: companies.slug,
     website: companies.website,
+    careersUrl: companies.careersUrl,
     logoUrl: companies.logoUrl,
     description: companies.description,
     location: companies.location,
@@ -196,41 +197,23 @@ function initialsOf(name: string) {
                 {company.location}
               </span>
             )}
-            {company.website && (
-              <a
-                href={company.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex items-center gap-1.5 hover:text-primary transition-colors"
-              >
-                <svg class="shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                  <polyline points="15 3 21 3 21 9" />
-                  <line x1="10" y1="14" x2="21" y2="3" />
-                </svg>
-                {company.website.replace(/^https?:\/\//, '')}
-              </a>
-            )}
           </div>
         </div>
 
         <div class="flex flex-col sm:flex-row lg:flex-col gap-3 lg:shrink-0">
-          <button
-            id="follow-btn"
-            type="button"
-            aria-pressed="false"
-            class="inline-flex items-center justify-center gap-2 rounded-full border border-primary/30 text-primary hover:bg-primary/5 h-11 px-6 text-sm font-semibold transition-all duration-200"
-          >
-            <svg id="follow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="8.5" cy="7" r="4" />
-              <line x1="20" y1="8" x2="20" y2="14" />
-              <line x1="23" y1="11" x2="17" y2="11" />
-            </svg>
-            <span id="follow-label">Seguir empresa</span>
-          </button>
+          {company.careersUrl && (
+            <Button href={company.careersUrl} target="_blank" rel="noopener noreferrer" class="h-11 px-6">
+              Ver empleos
+            </Button>
+          )}
           {company.website && (
-            <Button href={company.website} target="_blank" rel="noopener noreferrer" variant="outline" class="h-11 px-6">
+            <Button
+              href={company.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              variant={company.careersUrl ? 'outline' : 'default'}
+              class="h-11 px-6"
+            >
               Sitio web
             </Button>
           )}
@@ -338,32 +321,3 @@ function initialsOf(name: string) {
     )}
   </section>
 </Layout>
-
-<style>
-  #follow-btn[data-following="true"] {
-    background: var(--color-primary);
-    color: #ffffff;
-    border-color: transparent;
-    box-shadow: 0 4px 14px rgb(79 70 229 / 0.3);
-  }
-</style>
-
-<script>
-  const followBtn = document.getElementById('follow-btn')
-  const followIcon = document.getElementById('follow-icon')
-  const followLabel = document.getElementById('follow-label')
-
-  followBtn?.addEventListener('click', () => {
-    const following = followBtn.getAttribute('data-following') === 'true'
-    followBtn.setAttribute('data-following', String(!following))
-    followBtn.setAttribute('aria-pressed', String(!following))
-    if (followLabel) followLabel.textContent = following ? 'Seguir empresa' : 'Siguiendo'
-    if (followIcon) {
-      if (!following) {
-        followIcon.innerHTML = '<path d="M20 6L9 17l-5-5" />'
-      } else {
-        followIcon.innerHTML = '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" />'
-      }
-    }
-  })
-</script>

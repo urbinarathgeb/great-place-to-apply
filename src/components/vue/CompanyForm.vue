@@ -13,6 +13,7 @@ const props = defineProps<{ categories: Category[] }>()
 
 const name = ref('')
 const website = ref('')
+const careersUrl = ref('')
 const description = ref('')
 const location = ref('')
 const categoryId = ref<number | null>(null)
@@ -36,6 +37,7 @@ async function submit() {
   const payload = {
     name: name.value.trim(),
     website: website.value.trim() || null,
+    careersUrl: careersUrl.value.trim() || null,
     description: description.value.trim() || null,
     location: location.value.trim() || null,
     categoryId: categoryId.value,
@@ -115,6 +117,24 @@ async function submit() {
       />
       <p v-if="fieldErrors.website" class="text-sm text-destructive">
         {{ fieldErrors.website[0] }}
+      </p>
+    </div>
+
+    <!-- Careers -->
+    <div class="flex flex-col gap-2">
+      <label for="careersUrl" class="text-sm font-medium text-foreground">
+        Página de empleos
+        <span class="text-muted-foreground font-normal">(opcional)</span>
+      </label>
+      <input
+        id="careersUrl"
+        v-model="careersUrl"
+        type="url"
+        placeholder="https://empleos.ejemplo.cl"
+        class="border-input focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border bg-transparent px-3 py-2 text-base transition-colors focus-visible:ring-3 md:text-sm w-full outline-none placeholder:text-muted-foreground"
+      />
+      <p v-if="fieldErrors.careersUrl" class="text-sm text-destructive">
+        {{ fieldErrors.careersUrl[0] }}
       </p>
     </div>
 
