@@ -14,17 +14,18 @@ defineOptions({
 
 const props = defineProps<ComboboxInputProps & {
   class?: HTMLAttributes['class']
+  wrapperClass?: HTMLAttributes['class']
 }>()
 
 const emits = defineEmits<ComboboxInputEmits>()
 
-const delegatedProps = reactiveOmit(props, 'class')
+const delegatedProps = reactiveOmit(props, 'class', 'wrapperClass')
 
 const forwarded = useForwardPropsEmits(delegatedProps, emits)
 </script>
 
 <template>
-  <InputGroup>
+  <InputGroup :class="props.wrapperClass">
     <InputGroupAddon>
       <SearchIcon class="size-4 shrink-0 opacity-50" />
     </InputGroupAddon>
