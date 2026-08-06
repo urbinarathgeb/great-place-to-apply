@@ -341,7 +341,7 @@ onBeforeUnmount(() => {
 <template>
   <div>
     <!-- Search pill -->
-    <div class="glass shadow-float p-2 rounded-full flex flex-col md:flex-row gap-2 max-w-3xl">
+    <div class="glass shadow-float p-2 rounded-full flex flex-col md:flex-row gap-2 w-full">
       <div class="flex-1 flex items-center px-6 gap-3">
         <svg
           class="text-primary shrink-0"
@@ -433,7 +433,7 @@ onBeforeUnmount(() => {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" stroke-width="1.5" stroke-linejoin="round">
                 <path d="M12 2l2.9 6.26 6.85.71-5.15 4.6 1.48 6.72L12 17.1l-6.08 3.19 1.48-6.72-5.15-4.6 6.85-.71z" />
               </svg>
-              {{ scoreOf(item.c) }}
+              {{ item.c.reviewsCount > 0 ? scoreOf(item.c) : '—' }}
             </span>
           </div>
 
