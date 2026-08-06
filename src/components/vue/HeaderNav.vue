@@ -1,10 +1,27 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const isOpen = ref(false)
+const path = ref('/')
+const navQuery = ref('')
+
+onMounted(() => {
+  path.value = window.location.pathname
+})
 
 function close() {
   isOpen.value = false
+}
+
+function isActive(link: { href: string }): boolean {
+  if (link.href === '/') return path.value === '/'
+  return path.value.startsWith(link.href)
+}
+
+function goSearch() {
+  const q = navQuery.value.trim()
+  if (!q) return
+  window.location.href = `/companies?q=${encodeURIComponent(q)}`
 }
 
 const links = [
@@ -23,12 +40,35 @@ const btnDefault = 'inline-flex items-center justify-center whitespace-nowrap ro
       v-for="link in links"
       :key="link.href"
       :href="link.href"
-      class="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+      :class="isActive(link)
+        ? 'text-sm font-bold text-primary border-b-2 border-primary pb-0.5'
+        : 'text-sm font-medium text-muted-foreground hover:text-primary transition-colors'"
     >
       {{ link.label }}
     </a>
     <a :href="'/reviews/new'" :class="btnSm">Escribir review</a>
   </nav>
+
+  <!-- Desktop search pill (solo lg+) -->
+  <div
+    class="hidden lg:flex items-center glass rounded-full border border-white/40 px-4 py-2 transition-colors focus-within:border-primary/50"
+  >
+    <svg
+      class="size-4 shrink-0 text-muted-foreground"
+      width="16" height="16" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <path d="M21 21l-4.35-4.35" />
+    </svg>
+    <input
+      v-model="navQuery"
+      type="search"
+      placeholder="Buscar empresas..."
+      class="ml-2 w-40 bg-transparent border-none focus:ring-0 outline-none text-sm text-foreground placeholder:text-muted-foreground"
+      @keydown.enter="goSearch"
+    />
+  </div>
 
   <!-- Mobile hamburger (solo en <md) -->
   <button
@@ -74,7 +114,9 @@ const btnDefault = 'inline-flex items-center justify-center whitespace-nowrap ro
             v-for="link in links"
             :key="link.href"
             :href="link.href"
-            class="text-base font-medium text-foreground hover:text-accent transition-colors py-2"
+            :class="isActive(link)
+              ? 'text-base font-bold text-primary py-2'
+              : 'text-base font-medium text-foreground hover:text-accent transition-colors py-2'"
             @click="close"
           >
             {{ link.label }}
