@@ -12,11 +12,18 @@ const allCategories = await db
 ---
 
 <Layout title="Agregar empresa — Great Place To Apply">
-  <section class="py-8 md:py-12 max-w-2xl mx-auto">
-    <h1 class="text-2xl font-heading font-bold text-foreground mb-8">
-      Agregar empresa
-    </h1>
+  <section class="px-4 py-8 md:py-12 max-w-2xl mx-auto">
+    <div class="text-center mb-8 md:mb-10">
+      <h1 class="font-heading text-3xl md:text-5xl font-bold tracking-tight text-foreground">
+        Agregar Empresa
+      </h1>
+      <p class="mt-3 text-muted-foreground text-base md:text-lg max-w-xl mx-auto">
+        Ayuda a otros a encontrar su próximo gran desafío profesional.
+      </p>
+    </div>
 
-    <CompanyForm categories={allCategories} client:load />
+    <div class="glass shadow-float rounded-[2rem] p-6 md:p-10">
+      <CompanyForm categories={allCategories} client:load />
+    </div>
   </section>
 </Layout>

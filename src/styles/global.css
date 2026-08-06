@@ -134,4 +134,20 @@
     box-shadow: 0 0 0 4px rgb(79 70 229 / 0.15);
     outline: none;
   }
+
+  .input-organic-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: 0.75rem;
+    background-color: #f0f3ff;
+    border: 1px solid transparent;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .input-organic-wrap:focus-within {
+    background-color: #ffffff;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 4px rgb(79 70 229 / 0.15);
+    outline: none;
+  }
 }

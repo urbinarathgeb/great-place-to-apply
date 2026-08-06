@@ -2,6 +2,16 @@
 import { ref } from 'vue'
 import { useToast } from '@/lib/useToast'
 import ToastContainer from './ToastContainer.vue'
+import {
+  Building2Icon,
+  GlobeIcon,
+  TagsIcon,
+  BriefcaseBusinessIcon,
+  FileTextIcon,
+  MapPinIcon,
+  SendIcon,
+  ChevronDownIcon,
+} from '@lucide/vue'
 
 interface Category {
   id: number
@@ -87,16 +97,19 @@ async function submit() {
   <form @submit.prevent="submit" class="flex flex-col gap-6" novalidate>
     <!-- Name -->
     <div class="flex flex-col gap-2">
-      <label for="name" class="text-sm font-medium text-foreground">
+      <label for="name" class="ml-1 text-sm font-semibold text-muted-foreground">
         Nombre de la empresa <span class="text-destructive">*</span>
       </label>
-      <input
-        id="name"
-        v-model="name"
-        type="text"
-        placeholder="Ej: Banco de Chile"
-        class="border-input focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border bg-transparent px-3 py-2 text-base transition-colors focus-visible:ring-3 md:text-sm w-full outline-none placeholder:text-muted-foreground"
-      />
+      <div class="input-organic-wrap px-4 py-3">
+        <Building2Icon class="size-5 shrink-0 text-muted-foreground" />
+        <input
+          id="name"
+          v-model="name"
+          type="text"
+          placeholder="Ej: TechSolutions Global"
+          class="w-full border-none bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground/50 focus:ring-0 md:text-sm"
+        />
+      </div>
       <p v-if="fieldErrors.name" class="text-sm text-destructive">
         {{ fieldErrors.name[0] }}
       </p>
@@ -104,35 +117,72 @@ async function submit() {
 
     <!-- Website -->
     <div class="flex flex-col gap-2">
-      <label for="website" class="text-sm font-medium text-foreground">
+      <label for="website" class="ml-1 text-sm font-semibold text-muted-foreground">
         Sitio web
-        <span class="text-muted-foreground font-normal">(opcional)</span>
+        <span class="font-normal text-muted-foreground/70">(opcional)</span>
       </label>
-      <input
-        id="website"
-        v-model="website"
-        type="url"
-        placeholder="https://ejemplo.cl"
-        class="border-input focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border bg-transparent px-3 py-2 text-base transition-colors focus-visible:ring-3 md:text-sm w-full outline-none placeholder:text-muted-foreground"
-      />
+      <div class="input-organic-wrap px-4 py-3">
+        <GlobeIcon class="size-5 shrink-0 text-muted-foreground" />
+        <input
+          id="website"
+          v-model="website"
+          type="url"
+          placeholder="https://empresa.com"
+          class="w-full border-none bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground/50 focus:ring-0 md:text-sm"
+        />
+      </div>
       <p v-if="fieldErrors.website" class="text-sm text-destructive">
         {{ fieldErrors.website[0] }}
       </p>
     </div>
 
+    <!-- Category -->
+    <div class="flex flex-col gap-2">
+      <label for="category" class="ml-1 text-sm font-semibold text-muted-foreground">
+        Categoría <span class="text-destructive">*</span>
+      </label>
+      <div class="input-organic-wrap relative px-4 py-3">
+        <TagsIcon class="size-5 shrink-0 text-muted-foreground" />
+        <select
+          id="category"
+          v-model="categoryId"
+          :class="categoryId ? 'text-foreground' : 'text-muted-foreground/70'"
+          class="w-full cursor-pointer appearance-none border-none bg-transparent pr-8 text-base outline-none focus:ring-0 md:text-sm"
+        >
+          <option :value="null" disabled>Selecciona una industria</option>
+          <option
+            v-for="c in props.categories"
+            :key="c.id"
+            :value="c.id"
+          >
+            {{ c.name }}
+          </option>
+        </select>
+        <ChevronDownIcon
+          class="pointer-events-none absolute right-4 size-5 shrink-0 text-muted-foreground"
+        />
+      </div>
+      <p v-if="fieldErrors.categoryId" class="text-sm text-destructive">
+        {{ fieldErrors.categoryId[0] }}
+      </p>
+    </div>
+
     <!-- Careers -->
     <div class="flex flex-col gap-2">
-      <label for="careersUrl" class="text-sm font-medium text-foreground">
+      <label for="careersUrl" class="ml-1 text-sm font-semibold text-muted-foreground">
         Página de empleos
-        <span class="text-muted-foreground font-normal">(opcional)</span>
+        <span class="font-normal text-muted-foreground/70">(opcional)</span>
       </label>
-      <input
-        id="careersUrl"
-        v-model="careersUrl"
-        type="url"
-        placeholder="https://empleos.ejemplo.cl"
-        class="border-input focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border bg-transparent px-3 py-2 text-base transition-colors focus-visible:ring-3 md:text-sm w-full outline-none placeholder:text-muted-foreground"
-      />
+      <div class="input-organic-wrap px-4 py-3">
+        <BriefcaseBusinessIcon class="size-5 shrink-0 text-muted-foreground" />
+        <input
+          id="careersUrl"
+          v-model="careersUrl"
+          type="url"
+          placeholder="https://empleos.empresa.com"
+          class="w-full border-none bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground/50 focus:ring-0 md:text-sm"
+        />
+      </div>
       <p v-if="fieldErrors.careersUrl" class="text-sm text-destructive">
         {{ fieldErrors.careersUrl[0] }}
       </p>
@@ -140,17 +190,20 @@ async function submit() {
 
     <!-- Description -->
     <div class="flex flex-col gap-2">
-      <label for="description" class="text-sm font-medium text-foreground">
+      <label for="description" class="ml-1 text-sm font-semibold text-muted-foreground">
         Descripción
-        <span class="text-muted-foreground font-normal">(opcional)</span>
+        <span class="font-normal text-muted-foreground/70">(opcional)</span>
       </label>
-      <textarea
-        id="description"
-        v-model="description"
-        rows="3"
-        placeholder="Describe brevemente a qué se dedica la empresa..."
-        class="border-input focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border bg-transparent px-3 py-2 text-base transition-colors focus-visible:ring-3 md:text-sm w-full outline-none placeholder:text-muted-foreground resize-y"
-      />
+      <div class="input-organic-wrap px-4 py-3">
+        <FileTextIcon class="size-5 shrink-0 self-start text-muted-foreground" />
+        <textarea
+          id="description"
+          v-model="description"
+          rows="3"
+          placeholder="Describe brevemente a qué se dedica la empresa..."
+          class="w-full resize-y border-none bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground/50 focus:ring-0 md:text-sm"
+        />
+      </div>
       <p v-if="fieldErrors.description" class="text-sm text-destructive">
         {{ fieldErrors.description[0] }}
       </p>
@@ -158,54 +211,39 @@ async function submit() {
 
     <!-- Location -->
     <div class="flex flex-col gap-2">
-      <label for="location" class="text-sm font-medium text-foreground">
+      <label for="location" class="ml-1 text-sm font-semibold text-muted-foreground">
         Ubicación
-        <span class="text-muted-foreground font-normal">(opcional)</span>
+        <span class="font-normal text-muted-foreground/70">(opcional)</span>
       </label>
-      <input
-        id="location"
-        v-model="location"
-        type="text"
-        placeholder="Ej: Santiago, Chile"
-        class="border-input focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border bg-transparent px-3 py-2 text-base transition-colors focus-visible:ring-3 md:text-sm w-full outline-none placeholder:text-muted-foreground"
-      />
+      <div class="input-organic-wrap px-4 py-3">
+        <MapPinIcon class="size-5 shrink-0 text-muted-foreground" />
+        <input
+          id="location"
+          v-model="location"
+          type="text"
+          placeholder="Ciudad, País"
+          class="w-full border-none bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground/50 focus:ring-0 md:text-sm"
+        />
+      </div>
       <p v-if="fieldErrors.location" class="text-sm text-destructive">
         {{ fieldErrors.location[0] }}
       </p>
     </div>
 
-    <!-- Category -->
-    <div class="flex flex-col gap-2">
-      <label for="category" class="text-sm font-medium text-foreground">
-        Categoría <span class="text-destructive">*</span>
-      </label>
-      <select
-        id="category"
-        v-model="categoryId"
-        class="border-input focus-visible:border-ring focus-visible:ring-ring/50 rounded-lg border bg-transparent px-3 py-2 text-base transition-colors focus-visible:ring-3 md:text-sm w-full outline-none placeholder:text-muted-foreground"
+    <!-- Submit -->
+    <div class="pt-2">
+      <button
+        type="submit"
+        :disabled="submitting"
+        class="btn-gradient inline-flex w-full items-center justify-center gap-3 rounded-full py-4 text-sm font-semibold text-white shadow-xl shadow-primary/30 transition-all duration-300 hover:shadow-2xl hover:shadow-primary/40 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60"
       >
-        <option :value="null" disabled>Seleccionar categoría</option>
-        <option
-          v-for="c in props.categories"
-          :key="c.id"
-          :value="c.id"
-        >
-          {{ c.name }}
-        </option>
-      </select>
-      <p v-if="fieldErrors.categoryId" class="text-sm text-destructive">
-        {{ fieldErrors.categoryId[0] }}
+        {{ submitting ? 'Creando...' : 'Crear empresa' }}
+        <SendIcon v-if="!submitting" class="size-4" />
+      </button>
+      <p class="mt-4 text-center text-xs text-muted-foreground">
+        Al hacer clic, aceptas nuestros términos de servicio y políticas de comunidad.
       </p>
     </div>
-
-    <!-- Submit -->
-    <button
-      type="submit"
-      :disabled="submitting"
-      class="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-4 py-2 w-full"
-    >
-      {{ submitting ? 'Creando...' : 'Crear empresa' }}
-    </button>
   </form>
   <ToastContainer :toasts="toasts" />
 </template>
