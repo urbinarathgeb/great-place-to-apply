@@ -23,9 +23,15 @@ const containerClass = wide ? 'max-w-7xl' : 'max-w-5xl'
     {description && <meta name="description" content={description} />}
   </head>
   <body class="min-h-screen flex flex-col bg-background text-foreground font-sans antialiased">
+    <a
+      href="#contenido"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-full focus:bg-primary focus:px-5 focus:py-2.5 focus:text-white focus:text-sm focus:font-semibold"
+    >
+      Saltar al contenido
+    </a>
     <div class="aurora-bg fixed inset-0 -z-10 pointer-events-none" aria-hidden="true"></div>
     <Header />
-    <main class={`flex-1 w-full mx-auto px-4 md:px-6 lg:px-8 ${containerClass}`}>
+    <main id="contenido" class={`flex-1 w-full mx-auto px-4 md:px-6 lg:px-8 ${containerClass}`}>
       <slot />
     </main>
     <Footer />
