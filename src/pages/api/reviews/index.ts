@@ -4,13 +4,16 @@ import { reviews } from "@/db/schema/reviews.schema";
 import { companies } from "@/db/schema/companies.schema";
 import { stageReviews } from "@/db/schema/stage-reviews.schema";
 import { aspectRating } from "@/db/schema/aspect-rating.schema";
+import { processStages } from "@/db/schema/process-stages.schema";
 import { createReviewSchema } from "@/lib/validations";
 import { ilikeUnaccent } from "@/lib/search";
-import { count, eq, and, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 export const GET: APIRoute = async ({ url }) => {
   try {
     const q = url.searchParams.get("q");
+    const companyId = url.searchParams.get("companyId");
+    const stage = url.searchParams.get("stage");
     const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"));
     const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get("limit") || "20")));
     const offset = (page - 1) * limit;
@@ -19,6 +22,20 @@ export const GET: APIRoute = async ({ url }) => {
 
     if (q) {
       conditions.push(ilikeUnaccent(companies.name, `%${q}%`));
+    }
+
+    if (companyId) {
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(companyId)) {
+        return new Response(
+          JSON.stringify({ error: "companyId debe ser un UUID válido" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      conditions.push(eq(reviews.companyId, companyId));
+    }
+
+    if (stage) {
+      conditions.push(eq(processStages.slug, stage));
     }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined;
@@ -38,6 +55,7 @@ export const GET: APIRoute = async ({ url }) => {
       .innerJoin(companies, eq(reviews.companyId, companies.id))
       .leftJoin(stageReviews, eq(stageReviews.reviewId, reviews.id))
       .leftJoin(aspectRating, eq(aspectRating.stageReviewId, stageReviews.id))
+      .leftJoin(processStages, eq(stageReviews.stageId, processStages.id))
       .where(where)
       .groupBy(reviews.id, reviews.comment, companies.name, companies.slug, reviews.createdAt)
       .orderBy(sql`${reviews.createdAt} desc`)
@@ -45,9 +63,11 @@ export const GET: APIRoute = async ({ url }) => {
       .offset(offset);
 
     const [{ total }] = await db
-      .select({ total: count() })
+      .select({ total: sql<number>`count(distinct ${reviews.id})::int` })
       .from(reviews)
       .innerJoin(companies, eq(reviews.companyId, companies.id))
+      .leftJoin(stageReviews, eq(stageReviews.reviewId, reviews.id))
+      .leftJoin(processStages, eq(stageReviews.stageId, processStages.id))
       .where(where);
 
     const totalPages = Math.ceil(total / limit);
