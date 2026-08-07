@@ -1,340 +1,50 @@
 <script setup lang="ts">
-import { ref, computed, onBeforeUnmount } from 'vue'
-
-interface Category {
-  id: number
-  name: string
-  slug: string
-}
-
-interface Company {
-  id: string
-  name: string
-  slug: string
-  logoUrl: string | null
-  categoryName: string | null
-  categorySlug: string | null
-  reviewsCount: number
-  avgScore: string
-  latestComment: string | null
-  latestCommentDate: string | null
-}
-
-interface Pagination {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-}
+import {
+  useCompanyDirectory,
+  type DirectoryCategory,
+  type DirectoryCompany,
+  type DirectoryPagination,
+} from '@/lib/useCompanyDirectory'
 
 const props = defineProps<{
-  companies: Company[]
-  pagination: Pagination
-  categories: Category[]
+  companies: DirectoryCompany[]
+  pagination: DirectoryPagination
+  categories: DirectoryCategory[]
   initialQ?: string
   initialCategory?: string
 }>()
 
-const LIMIT = 12
-
-const companies = ref<Company[]>([...props.companies])
-const total = ref(props.pagination.total)
-const totalPages = ref(props.pagination.totalPages)
-const currentPage = ref(props.pagination.page)
-const q = ref(props.initialQ ?? '')
-const activeCategory = ref(props.initialCategory ?? '')
-const loading = ref(false)
-const loadingMore = ref(false)
-const error = ref(false)
-
-let debounceTimer: ReturnType<typeof setTimeout> | null = null
-let controller: AbortController | null = null
-
-const chipActive = 'inline-flex items-center rounded-full bg-primary text-white text-sm font-semibold px-4 py-2 transition-colors'
-const chipIdle = 'inline-flex items-center rounded-full bg-white/70 border border-white/60 text-muted-foreground text-sm font-medium px-4 py-2 transition-all hover:text-primary hover:border-primary/40'
-const btnOutline = 'inline-flex items-center justify-center rounded-full text-sm font-semibold transition-all duration-200 border border-primary/30 text-primary hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50 h-11 px-8'
-
-const shown = computed(() => companies.value.length)
-const hasMore = computed(() => currentPage.value < totalPages.value)
-const hasFilters = computed(() => q.value.trim() !== '' || activeCategory.value !== '')
-
-const activeCategoryName = computed(
-  () => props.categories.find((c) => c.slug === activeCategory.value)?.name ?? activeCategory.value,
-)
-
-const resultLabel = computed(() => {
-  if (total.value === 0) return ''
-  const noun = total.value === 1 ? 'empresa' : 'empresas'
-  return `Mostrando ${shown.value} de ${total.value} ${noun}`
-})
-
-function syncUrl() {
-  const params = new URLSearchParams()
-  const trimmed = q.value.trim()
-  if (trimmed) params.set('q', trimmed)
-  if (activeCategory.value) params.set('category', activeCategory.value)
-  const qs = params.toString()
-  history.replaceState(null, '', qs ? `/companies?${qs}` : '/companies')
-}
-
-function queryString(page: number) {
-  const params = new URLSearchParams()
-  const trimmed = q.value.trim()
-  if (trimmed) params.set('q', trimmed)
-  if (activeCategory.value) params.set('category', activeCategory.value)
-  params.set('page', String(page))
-  params.set('limit', String(LIMIT))
-  return `?${params.toString()}`
-}
-
-function onInput() {
-  if (debounceTimer) clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(fetchFirstPage, 300)
-}
-
-function onSearch() {
-  if (debounceTimer) clearTimeout(debounceTimer)
-  fetchFirstPage()
-}
-
-function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'Enter') {
-    e.preventDefault()
-    onSearch()
-  }
-}
-
-function selectCategory(slug: string) {
-  activeCategory.value = slug
-  fetchFirstPage()
-}
-
-function clearFilters() {
-  q.value = ''
-  activeCategory.value = ''
-  fetchFirstPage()
-}
-
-async function fetchFirstPage() {
-  controller?.abort()
-  controller = new AbortController()
-  loading.value = true
-  error.value = false
-  syncUrl()
-  try {
-    const res = await fetch(`/api/companies${queryString(1)}`, { signal: controller.signal })
-    const data = await res.json()
-    if (data.error) throw new Error(data.error)
-    companies.value = data.companies
-    total.value = data.pagination.total
-    totalPages.value = data.pagination.totalPages
-    currentPage.value = 1
-  } catch (err) {
-    if ((err as Error).name !== 'AbortError') error.value = true
-  } finally {
-    loading.value = false
-  }
-}
-
-async function loadMore() {
-  if (loadingMore.value || !hasMore.value) return
-  controller?.abort()
-  controller = new AbortController()
-  loadingMore.value = true
-  error.value = false
-  try {
-    const next = currentPage.value + 1
-    const res = await fetch(`/api/companies${queryString(next)}`, { signal: controller.signal })
-    const data = await res.json()
-    if (data.error) throw new Error(data.error)
-    companies.value = [...companies.value, ...data.companies]
-    total.value = data.pagination.total
-    totalPages.value = data.pagination.totalPages
-    currentPage.value = next
-  } catch (err) {
-    if ((err as Error).name !== 'AbortError') error.value = true
-  } finally {
-    loadingMore.value = false
-  }
-}
-
-function scoreOf(c: Company) {
-  const n = parseFloat(c.avgScore)
-  return isNaN(n) ? '0' : n.toFixed(1)
-}
-
-function initialsOf(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? '')
-    .join('')
-}
-
-const SPAN_BY_SIZE: Record<number, number> = {
-  '-2': 3,
-  '-1': 4,
-  '0': 6,
-  '1': 7,
-  '2': 8,
-}
-
-const SPAN_CLASS_BY_SPAN: Record<number, string> = {
-  3: 'lg:col-span-3 xl:col-span-3',
-  4: 'lg:col-span-4 xl:col-span-4',
-  5: 'lg:col-span-5 xl:col-span-5',
-  6: 'lg:col-span-6 xl:col-span-6',
-  7: 'lg:col-span-7 xl:col-span-7',
-  8: 'lg:col-span-8 xl:col-span-8',
-}
-
-const ROW_PATTERNS_BY_COUNT: Record<number, number[][]> = {
-  2: [
-    [8, 4],
-    [7, 5],
-    [6, 6],
-  ],
-  3: [
-    [6, 3, 3],
-    [4, 4, 4],
-    [5, 4, 3],
-  ],
-  4: [[3, 3, 3, 3]],
-}
-
-function sizeOf(company: Company, index: number) {
-  let size = 0
-  if (company.reviewsCount >= 8) size += 2
-  else if (company.reviewsCount >= 1) size += 1
-  if (company.name.length >= 20) size += 1
-  if (index % 5 === 0) size += 1
-  else if (index % 5 === 3) size -= 1
-  return Math.max(-2, Math.min(2, size))
-}
-
-function desiredSpan(company: Company, index: number) {
-  return SPAN_BY_SIZE[sizeOf(company, index)] ?? 6
-}
-
-function permutationsWithDedup(values: number[]): number[][] {
-  const seen = new Set<string>()
-  const result: number[][] = []
-  const used = new Array(values.length).fill(false)
-
-  function backtrack(current: number[]) {
-    if (current.length === values.length) {
-      const key = current.join(',')
-      if (!seen.has(key)) {
-        seen.add(key)
-        result.push([...current])
-      }
-      return
-    }
-    for (let i = 0; i < values.length; i++) {
-      if (used[i]) continue
-      used[i] = true
-      current.push(values[i])
-      backtrack(current)
-      current.pop()
-      used[i] = false
-    }
-  }
-
-  backtrack([])
-  return result
-}
-
-const ROW_SHAPES = [2, 3, 4]
-
-function weightedRowShape(counter: number) {
-  const r = (counter * 7 + 5) % 10
-  if (r < 4) return 2
-  if (r < 8) return 3
-  return 4
-}
-
-function bestPatternForK(items: Company[], start: number, k: number) {
-  const patterns = ROW_PATTERNS_BY_COUNT[k]
-  const desireds = items.slice(start, start + k).map((c, j) => desiredSpan(c, start + j))
-  let best: { pattern: number[]; cost: number } | null = null
-  for (const pattern of patterns) {
-    const sorted = [...pattern].sort((a, b) => a - b)
-    const sortedDesireds = [...desireds].sort((a, b) => a - b)
-    const cost = sorted.reduce((acc, span, i) => acc + Math.abs(span - sortedDesireds[i]), 0)
-    if (!best || cost < best.cost) best = { pattern, cost }
-  }
-  return best
-}
-
-function nextRowShape(remaining: number, shapeCounter: number) {
-  if (remaining === 1) return null
-  for (let attempt = 0; attempt < ROW_SHAPES.length; attempt++) {
-    const k = weightedRowShape(shapeCounter + attempt)
-    if (k <= remaining && remaining - k !== 1) return k
-  }
-  for (const k of ROW_SHAPES) {
-    if (k <= remaining && remaining - k !== 1) return k
-  }
-  return remaining >= 3 ? 3 : remaining
-}
-
-function buildLayout(items: Company[]) {
-  const placed: { company: Company; span: number; idx: number }[] = []
-  let idx = 0
-  let shapeCounter = 0
-  let rowCounter = 0
-  while (idx < items.length) {
-    const k = nextRowShape(items.length - idx, shapeCounter)
-    shapeCounter += 1
-    if (k === null) {
-      placed.push({ company: items[idx], span: 6, idx })
-      idx += 1
-      continue
-    }
-    const row = bestPatternForK(items, idx, k)
-    if (!row) {
-      placed.push({ company: items[idx], span: 6, idx })
-      idx += 1
-      continue
-    }
-    const perms = permutationsWithDedup(row.pattern)
-    const chosen = perms[rowCounter % perms.length]
-    rowCounter += 1
-    for (const span of chosen) {
-      placed.push({ company: items[idx], span, idx })
-      idx += 1
-    }
-  }
-  return placed.map((p) => ({
-    c: p.company,
-    spanClass: SPAN_CLASS_BY_SPAN[p.span] ?? 'lg:col-span-6 xl:col-span-6',
-    isLarge: p.span >= 8,
-  }))
-}
-
-const layout = computed(() => buildLayout(companies.value))
-
-function timeAgo(value: string | null) {
-  if (!value) return ''
-  const then = new Date(value)
-  if (isNaN(then.getTime())) return ''
-  const mins = Math.round((Date.now() - then.getTime()) / 60000)
-  if (mins < 1) return 'hace un momento'
-  if (mins < 60) return `hace ${mins} min`
-  const hours = Math.round(mins / 60)
-  if (hours < 24) return `hace ${hours} h`
-  const days = Math.round(hours / 24)
-  if (days < 30) return `hace ${days} ${days === 1 ? 'día' : 'días'}`
-  const months = Math.round(days / 30)
-  if (months < 12) return `hace ${months} ${months === 1 ? 'mes' : 'meses'}`
-  const years = Math.round(months / 12)
-  return `hace ${years} ${years === 1 ? 'año' : 'años'}`
-}
-
-onBeforeUnmount(() => {
-  controller?.abort()
-  if (debounceTimer) clearTimeout(debounceTimer)
+const {
+  q,
+  activeCategory,
+  loading,
+  loadingMore,
+  error,
+  shown,
+  hasMore,
+  hasFilters,
+  activeCategoryName,
+  resultLabel,
+  layout,
+  chipActive,
+  chipIdle,
+  btnOutline,
+  scoreOf,
+  initialsOf,
+  timeAgo,
+  onInput,
+  onSearch,
+  onKeydown,
+  selectCategory,
+  clearFilters,
+  fetchFirstPage,
+  loadMore,
+} = useCompanyDirectory({
+  initialCompanies: props.companies,
+  initialPagination: props.pagination,
+  categories: props.categories,
+  initialQ: props.initialQ,
+  initialCategory: props.initialCategory,
 })
 </script>
 
@@ -387,7 +97,7 @@ onBeforeUnmount(() => {
 
     <!-- Result count -->
     <div class="flex items-center justify-between mt-8 mb-4">
-      <p class="text-sm text-muted-foreground font-medium">
+      <p class="text-sm text-muted-foreground font-medium" role="status" aria-live="polite">
         {{ resultLabel }}
         <span v-if="loading && shown > 0" class="text-muted-foreground/60">· actualizando…</span>
       </p>
@@ -403,6 +113,7 @@ onBeforeUnmount(() => {
       v-else-if="shown > 0"
       class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-12"
       :class="loading ? 'opacity-60 pointer-events-none' : ''"
+      :aria-busy="loading ? 'true' : 'false'"
     >
       <div
         v-for="item in layout"
@@ -489,7 +200,7 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Error -->
-    <div v-else-if="error" class="text-center py-16">
+    <div v-else-if="error" class="text-center py-16" role="alert">
       <p class="text-muted-foreground font-medium">Ocurrió un error al cargar las empresas</p>
       <button :class="btnOutline" class="mt-6" @click="fetchFirstPage">Reintentar</button>
     </div>
