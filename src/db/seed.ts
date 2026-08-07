@@ -723,69 +723,75 @@ async function seed() {
       });
   }
 
-  console.log("🌱 Seeding reviews...");
-  const allCompanies = await db.select().from(companies);
-  const allStages = await db.select().from(processStages);
-  const companyBySlug = new Map(allCompanies.map((c) => [c.slug, c.id]));
-  const stageBySlug = new Map(allStages.map((s) => [s.slug, s.id]));
+  const seedReviewsEnabled = process.env.SEED_REVIEWS !== "false";
 
-  for (const reviewData of seedReviews) {
-    const companyId = companyBySlug.get(reviewData.companySlug);
-    if (!companyId) {
-      console.warn(`⚠️  Company "${reviewData.companySlug}" not found, skipping review`);
-      continue;
-    }
+  if (seedReviewsEnabled) {
+    console.log("🌱 Seeding reviews...");
+    const allCompanies = await db.select().from(companies);
+    const allStages = await db.select().from(processStages);
+    const companyBySlug = new Map(allCompanies.map((c) => [c.slug, c.id]));
+    const stageBySlug = new Map(allStages.map((s) => [s.slug, s.id]));
 
-    await db.transaction(async (tx) => {
-      const [existing] = await tx
-        .select({ id: reviews.id })
-        .from(reviews)
-        .where(and(eq(reviews.companyId, companyId), eq(reviews.ipHash, "seed"), eq(reviews.comment, reviewData.comment)))
-        .limit(1);
-
-      let reviewId: string;
-      if (existing) {
-        reviewId = existing.id;
-        await tx
-          .update(reviews)
-          .set({ role: reviewData.role, recommends: reviewData.recommends, createdAt: daysAgo(reviewData.daysAgo) })
-          .where(eq(reviews.id, reviewId));
-
-        const oldStages = await tx
-          .select({ id: stageReviews.id })
-          .from(stageReviews)
-          .where(eq(stageReviews.reviewId, reviewId));
-        for (const s of oldStages) {
-          await tx.delete(aspectRating).where(eq(aspectRating.stageReviewId, s.id));
-        }
-        await tx.delete(stageReviews).where(eq(stageReviews.reviewId, reviewId));
-      } else {
-        const [review] = await tx
-          .insert(reviews)
-          .values({ companyId, ipHash: "seed", role: reviewData.role, recommends: reviewData.recommends, comment: reviewData.comment, createdAt: daysAgo(reviewData.daysAgo) })
-          .returning({ id: reviews.id });
-        reviewId = review.id;
+    for (const reviewData of seedReviews) {
+      const companyId = companyBySlug.get(reviewData.companySlug);
+      if (!companyId) {
+        console.warn(`⚠️  Company "${reviewData.companySlug}" not found, skipping review`);
+        continue;
       }
 
-      for (const sr of reviewData.stages) {
-        const stageId = stageBySlug.get(sr.stageSlug);
-        if (!stageId) {
-          console.warn(`⚠️  Stage "${sr.stageSlug}" not found, skipping`);
-          continue;
-        }
+      await db.transaction(async (tx) => {
+        const [existing] = await tx
+          .select({ id: reviews.id })
+          .from(reviews)
+          .where(and(eq(reviews.companyId, companyId), eq(reviews.ipHash, "seed"), eq(reviews.comment, reviewData.comment)))
+          .limit(1);
 
-        const [stageReview] = await tx
-          .insert(stageReviews)
-          .values({ reviewId, stageId, comment: sr.comment })
-          .returning({ id: stageReviews.id });
-
-        for (const r of sr.ratings) {
+        let reviewId: string;
+        if (existing) {
+          reviewId = existing.id;
           await tx
-            .insert(aspectRating)
-            .values({ stageReviewId: stageReview.id, aspectName: r.aspectName, score: r.score });
+            .update(reviews)
+            .set({ role: reviewData.role, recommends: reviewData.recommends, createdAt: daysAgo(reviewData.daysAgo) })
+            .where(eq(reviews.id, reviewId));
+
+          const oldStages = await tx
+            .select({ id: stageReviews.id })
+            .from(stageReviews)
+            .where(eq(stageReviews.reviewId, reviewId));
+          for (const s of oldStages) {
+            await tx.delete(aspectRating).where(eq(aspectRating.stageReviewId, s.id));
+          }
+          await tx.delete(stageReviews).where(eq(stageReviews.reviewId, reviewId));
+        } else {
+          const [review] = await tx
+            .insert(reviews)
+            .values({ companyId, ipHash: "seed", role: reviewData.role, recommends: reviewData.recommends, comment: reviewData.comment, createdAt: daysAgo(reviewData.daysAgo) })
+            .returning({ id: reviews.id });
+          reviewId = review.id;
         }
-      }
-    });
+
+        for (const sr of reviewData.stages) {
+          const stageId = stageBySlug.get(sr.stageSlug);
+          if (!stageId) {
+            console.warn(`⚠️  Stage "${sr.stageSlug}" not found, skipping`);
+            continue;
+          }
+
+          const [stageReview] = await tx
+            .insert(stageReviews)
+            .values({ reviewId, stageId, comment: sr.comment })
+            .returning({ id: stageReviews.id });
+
+          for (const r of sr.ratings) {
+            await tx
+              .insert(aspectRating)
+              .values({ stageReviewId: stageReview.id, aspectName: r.aspectName, score: r.score });
+          }
+        }
+      });
+    }
+  } else {
+    console.log("⏭️  Seeding de reviews desactivado (SEED_REVIEWS=false)");
   }
 
   console.log("🧹 Limpiando etapas obsoletas...");

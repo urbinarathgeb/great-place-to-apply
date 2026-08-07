@@ -15,7 +15,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:setup": "tsx src/db/setup.ts",
-    "db:seed": "tsx src/db/seed.ts"
+    "db:seed": "tsx src/db/seed.ts",
+    "db:seed:prod": "SEED_REVIEWS=false tsx src/db/seed.ts"
   },
   "dependencies": {
     "@astrojs/vercel": "^11.0.3",
