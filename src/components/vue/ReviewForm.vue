@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ref, computed, reactive, watch, onMounted } from 'vue'
-import ToastContainer from './ToastContainer.vue'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -16,256 +14,54 @@ import {
   ComboboxAnchor,
   ComboboxEmpty,
   ComboboxGroup,
-  ComboboxInput,
   ComboboxItem,
   ComboboxItemIndicator,
+  ComboboxInput,
   ComboboxList,
   ComboboxViewport,
 } from '@/components/ui/combobox'
 import { XIcon, CheckIcon, SendIcon, CirclePlusIcon } from '@lucide/vue'
-import { useToast } from '@/lib/useToast'
-
-interface Company {
-  id: string
-  name: string
-  slug: string
-  categoryName: string | null
-}
-
-interface Stage {
-  id: number
-  name: string
-}
+import ToastContainer from './ToastContainer.vue'
+import {
+  useReviewForm,
+  type FormCompany,
+  type FormStage,
+} from '@/lib/useReviewForm'
 
 const props = defineProps<{
-  companies: Company[]
-  stages: Stage[]
+  companies: FormCompany[]
+  stages: FormStage[]
   initialCompanyId?: string | null
 }>()
 
-onMounted(() => {
-  if (props.initialCompanyId) {
-    selectedCompanyId.value = props.initialCompanyId
-  }
+const {
+  selectedCompanyId,
+  companyQuery,
+  showDropdown,
+  role,
+  recommends,
+  comment,
+  submitting,
+  fieldErrors,
+  toasts,
+  stages,
+  filteredCompanies,
+  stageGroups,
+  aspectLabels,
+  addStage,
+  removeStage,
+  setRating,
+  orderedAspectsFor,
+  isSuggestedForStage,
+  availableInStageGroup,
+  clearCompany,
+  displayCompanyName,
+  submit,
+} = useReviewForm({
+  companies: props.companies,
+  stages: props.stages,
+  initialCompanyId: props.initialCompanyId,
 })
-
-const aspects = ['rapidez', 'feedback', 'transparencia', 'trato']
-
-const selectedCompanyId = ref<string | null>(null)
-const selectedCompany = ref<Company | null>(null)
-const companyQuery = ref('')
-const showDropdown = ref(false)
-const role = ref('')
-const recommends = ref<boolean | null>(null)
-const comment = ref('')
-const submitting = ref(false)
-const fieldErrors = ref<Record<string, string[]>>({})
-const { toasts, show } = useToast()
-
-watch(selectedCompanyId, (id) => {
-  if (id) {
-    selectedCompany.value = props.companies.find((c) => c.id === id) ?? null
-  } else {
-    selectedCompany.value = null
-  }
-})
-
-const filteredCompanies = computed(() => {
-  const q = companyQuery.value.toLowerCase().trim()
-  if (!q) return props.companies
-  return props.companies.filter(
-    (c) =>
-      c.name.toLowerCase().includes(q) ||
-      (c.categoryName && c.categoryName.toLowerCase().includes(q)),
-  )
-})
-
-function clearCompany() {
-  selectedCompanyId.value = null
-  selectedCompany.value = null
-  companyQuery.value = ''
-}
-
-function displayCompanyName(id: unknown): string {
-  return props.companies.find((c) => c.id === id)?.name ?? ''
-}
-
-interface StageEntry {
-  stageId: number | null
-  comment: string
-  ratings: Record<string, number>
-}
-
-const stages = reactive<StageEntry[]>([])
-
-function addStage() {
-  stages.push({
-    stageId: null,
-    comment: '',
-    ratings: { rapidez: 0, feedback: 0, transparencia: 0, trato: 0 },
-  })
-}
-
-function removeStage(i: number) {
-  stages.splice(i, 1)
-}
-
-function setRating(stageIdx: number, aspect: string, value: number) {
-  stages[stageIdx].ratings[aspect] =
-    stages[stageIdx].ratings[aspect] === value ? 0 : value
-}
-
-const aspectLabels: Record<string, string> = {
-  rapidez: 'Rapidez',
-  feedback: 'Feedback',
-  transparencia: 'Transparencia',
-  trato: 'Trato',
-}
-
-const stageAspectHints: Record<string, string[]> = {
-  'Postulación Enviada': ['rapidez', 'transparencia'],
-  'Screening o primera llamada': ['trato', 'rapidez', 'transparencia'],
-  'Entrevista con HR o Reclutador': ['trato', 'rapidez', 'feedback'],
-  'Entrevista técnica': ['rapidez', 'feedback', 'transparencia'],
-  'Entrevista con el líder del equipo (Hiring Manager)': ['trato', 'feedback'],
-  'Entrevista con el equipo o Panel': ['trato', 'feedback'],
-  'Entrevista con dirección / C-level / CEO': ['trato', 'transparencia'],
-  'Prueba práctica o caso (take-home)': ['rapidez', 'feedback'],
-  'Test psicométrico o aptitudes': ['transparencia', 'rapidez'],
-  'Assessment center / dinámica grupal': ['trato', 'feedback'],
-  'Oferta laboral / negociación': ['transparencia', 'trato'],
-  'Resultado del proceso': ['transparencia', 'feedback'],
-}
-
-const stagePhase: Record<string, string> = {
-  'Postulación Enviada': 'Aplicación',
-  'Screening o primera llamada': 'Entrevistas',
-  'Entrevista con HR o Reclutador': 'Entrevistas',
-  'Entrevista técnica': 'Entrevistas',
-  'Entrevista con el líder del equipo (Hiring Manager)': 'Entrevistas',
-  'Entrevista con el equipo o Panel': 'Entrevistas',
-  'Entrevista con dirección / C-level / CEO': 'Entrevistas',
-  'Prueba práctica o caso (take-home)': 'Pruebas y evaluaciones',
-  'Test psicométrico o aptitudes': 'Pruebas y evaluaciones',
-  'Assessment center / dinámica grupal': 'Pruebas y evaluaciones',
-  'Oferta laboral / negociación': 'Oferta y cierre',
-  'Resultado del proceso': 'Oferta y cierre',
-}
-
-const stagePhases = ['Aplicación', 'Entrevistas', 'Pruebas y evaluaciones', 'Oferta y cierre', 'Otras']
-
-const stageGroups = computed(() =>
-  stagePhases
-    .map((phase) => ({
-      phase,
-      stages: props.stages.filter((s) => (stagePhase[s.name] ?? 'Otras') === phase),
-    }))
-    .filter((g) => g.stages.length > 0),
-)
-
-function stageNameOf(stage: StageEntry): string {
-  return props.stages.find((s) => s.id === stage.stageId)?.name ?? ''
-}
-
-function orderedAspectsFor(stage: StageEntry): string[] {
-  const hints = stageAspectHints[stageNameOf(stage)] ?? []
-  return [...hints, ...aspects.filter((a) => !hints.includes(a))]
-}
-
-function isSuggestedForStage(stage: StageEntry, aspect: string): boolean {
-  return (stageAspectHints[stageNameOf(stage)] ?? []).includes(aspect)
-}
-
-function availableInGroup(stageIdx: number, group: { phase: string; stages: Stage[] }): Stage[] {
-  const ids = new Set(availableStages(stageIdx).map((s) => s.id))
-  return group.stages.filter((s) => ids.has(s.id))
-}
-
-const stageOptions = computed(() =>
-  props.stages.filter((s) => !stages.some((e) => e.stageId === s.id)),
-)
-
-function availableStages(excludeIdx: number): Stage[] {
-  return props.stages.filter(
-    (s) =>
-      s.id === stages[excludeIdx].stageId ||
-      !stages.some((e, i) => i !== excludeIdx && e.stageId === s.id),
-  )
-}
-
-async function submit() {
-  fieldErrors.value = {}
-
-  if (!selectedCompany.value) {
-    fieldErrors.value = { company: ['Selecciona una empresa'] }
-    return
-  }
-
-  if (!role.value.trim()) {
-    fieldErrors.value = { role: ['El rol o puesto es obligatorio'] }
-    return
-  }
-
-  if (recommends.value === null) {
-    fieldErrors.value = { recommends: ['Indica si recomendarías esta empresa'] }
-    return
-  }
-
-  const unratedStage = stages.findIndex((s) => !Object.values(s.ratings).some((v) => v > 0))
-  if (unratedStage !== -1) {
-    fieldErrors.value = {
-      [`stageReviews.${unratedStage}.ratings`]: ['Califica al menos un aspecto en esta etapa'],
-    }
-    return
-  }
-
-  const payload = {
-    companyId: selectedCompany.value.id,
-    role: role.value.trim(),
-    recommends: recommends.value,
-    comment: comment.value,
-    stageReviews: stages.map((s) => ({
-      stageId: s.stageId!,
-      comment: s.comment,
-      ratings: Object.entries(s.ratings)
-        .filter(([, v]) => v > 0)
-        .map(([aspectName, score]) => ({ aspectName, score })),
-    })),
-  }
-
-  submitting.value = true
-
-  try {
-    const res = await fetch('/api/reviews', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-
-    const data = await res.json()
-
-    if (!res.ok) {
-      if (data.details) {
-        const grouped: Record<string, string[]> = {}
-        for (const issue of data.details) {
-          const path = issue.path?.join('.') || 'general'
-          if (!grouped[path]) grouped[path] = []
-          grouped[path].push(issue.message)
-        }
-        fieldErrors.value = grouped
-      }
-      show(data.error || 'Error al enviar la review', 'error')
-      return
-    }
-
-    show('Review enviada con éxito', 'success', 4000)
-    setTimeout(() => { window.location.href = `/reviews/${data.id}` }, 3000)
-  } catch {
-    show('Error de conexión. Intenta nuevamente.', 'error')
-  } finally {
-    submitting.value = false
-  }
-}
 </script>
 
 <template>
@@ -444,10 +240,10 @@ async function submit() {
           </SelectTrigger>
           <SelectContent>
             <template v-for="g in stageGroups" :key="g.phase">
-              <SelectGroup v-if="availableInGroup(i, g).length > 0">
+              <SelectGroup v-if="availableInStageGroup(i, g).length > 0">
                 <SelectLabel>{{ g.phase }}</SelectLabel>
                 <SelectItem
-                  v-for="s in availableInGroup(i, g)"
+                  v-for="s in availableInStageGroup(i, g)"
                   :key="s.id"
                   :value="s.id"
                 >
