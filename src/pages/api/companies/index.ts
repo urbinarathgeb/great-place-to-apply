@@ -7,6 +7,7 @@
 //   GET /api/companies                        → todas las empresas (page 1, 20 resultados)
 //   GET /api/companies?q=falabella            → busca por nombre (case-insensitive)
 //   GET /api/companies?category=mineria       → filtra por categoría
+//   GET /api/companies?sort=reviews|rating    → ordena por nº de reviews o rating (default: name)
 //   GET /api/companies?page=2&limit=5         → paginación
 //
 // Respuesta JSON:
@@ -35,6 +36,7 @@ export const GET: APIRoute = async ({ url }) => {
 
     const q = url.searchParams.get("q");              // ?q=falabella → "falabella"
     const category = url.searchParams.get("category"); // ?category=mineria → "mineria"
+    const sort = url.searchParams.get("sort") || "name"; // ?sort=reviews|rating → orden
     const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"));
     const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get("limit") || "20")));
     const offset = (page - 1) * limit;                // calculamos el offset para SQL
@@ -61,6 +63,19 @@ export const GET: APIRoute = async ({ url }) => {
     // ── PASO 3: Query principal ──────────────────────────────────
     // Drizzle construye la query de forma encadenada (method chaining)
     // Esto genera SQL como: SELECT id, name, slug... FROM companies LEFT JOIN categories...
+
+    let orderBy:
+      | typeof companies.name
+      | ReturnType<typeof sql<unknown>>
+    if (sort === "reviews") {
+      // Más reviews primero; desempate alfabético para paginación estable
+      orderBy = sql`count(distinct ${reviews.id}) desc, ${companies.name} asc`;
+    } else if (sort === "rating") {
+      // Mejor rating primero; empresas sin reviews al final; desempate alfabético
+      orderBy = sql`case when count(distinct ${reviews.id}) = 0 then 1 else 0 end, coalesce(avg(${aspectRating.score})::numeric(3,2), '0') desc, ${companies.name} asc`;
+    } else {
+      orderBy = companies.name;
+    }
 
     const results = await db
       .select({
@@ -97,7 +112,7 @@ export const GET: APIRoute = async ({ url }) => {
         eq(aspectRating.stageReviewId, stageReviews.id))
       .where(where)
       .groupBy(companies.id, categories.name, categories.slug)
-      .orderBy(companies.name)
+      .orderBy(orderBy)
       .limit(limit)
       .offset(offset);
 
