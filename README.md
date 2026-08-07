@@ -22,7 +22,7 @@ El proyecto surge como respuesta al creciente problema del _ghosting_ laboral y 
 - **Backend:** Astro API Routes (SSR)
 - **DB:** PostgreSQL (Supabase como host)
 - **ORM:** Drizzle ORM + Drizzle Kit (postgres.js driver)
-- **Validación:** Zod v4
+- **Validación:** Zod
 - **Componentes:** shadcn-vue
 - **Deploy:** Vercel
 
@@ -61,10 +61,16 @@ pnpm db:setup
 
 # 7. Poblar datos iniciales (empresas, etapas, categorías, reviews demo)
 pnpm db:seed
+#    En producción usa el seed sin reviews demo:
+#    DATABASE_URL="postgresql://..." pnpm db:seed:prod
 
 # 8. Iniciar dev server
 pnpm dev
 ```
+
+> Los comandos de DB (`db:push`, `db:seed`, etc.) leen `DATABASE_URL` desde
+> `.env.development` por defecto. Para apuntar a otra base (p. ej. producción),
+> exporta `DATABASE_URL` en la misma línea del comando.
 
 ### Comandos útiles
 
@@ -72,8 +78,11 @@ pnpm dev
 |---|---|
 | `pnpm dev` | Iniciar dev server en `localhost:4321` |
 | `pnpm db:push` | Aplicar cambios de schema a la DB directo |
+| `pnpm db:generate` | Generar migración SQL a partir del schema |
+| `pnpm db:migrate` | Aplicar migraciones generadas |
 | `pnpm db:setup` | Habilitar extensiones (unaccent) |
-| `pnpm db:seed` | Poblar datos iniciales |
+| `pnpm db:seed` | Poblar datos iniciales (incluye reviews demo) |
+| `pnpm db:seed:prod` | Poblar datos iniciales sin reviews demo (producción) |
 | `pnpm db:studio` | Abrir Drizzle Studio (UI para explorar la DB) |
 | `pnpm astro check` | Verificar tipos TypeScript |
 
@@ -84,7 +93,10 @@ pnpm dev
 > Las rutas `/api/*` fueron creadas como herramienta de desarrollo y testing.
 > Permiten probar la lógica de negocio con `curl` o los archivos `requests/*.http`
 > sin renderizar HTML. **No están diseñadas para consumo externo** (no hay
-> autenticación, rate limiting, ni documentación OpenAPI).
+> autenticación ni documentación OpenAPI).
+>
+> `POST /api/reviews` incluye anti-spam básico: cooldown de 30 días por
+> IP + empresa y máximo 1 review cada 5 minutos por IP (respuestas `429`).
 >
 > Las páginas SSR (`/`, `/companies`, `/reviews`, etc.) consumen la base de
 > datos directamente a través de Drizzle, no llaman a la API.
@@ -93,7 +105,7 @@ pnpm dev
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| `GET` | `/api/companies` | Listado con búsqueda (`?q=`), filtro por categoría (`?category=`) y paginación |
+| `GET` | `/api/companies` | Listado con búsqueda (`?q=`), filtro por categoría (`?category=`), orden por `?sort=reviews\|rating` y paginación |
 | `POST` | `/api/companies` | Crear empresa nueva |
 | `GET` | `/api/companies/:slug` | Detalle de empresa con reviews, promedios por aspecto y distribución de etapas |
 
@@ -101,9 +113,9 @@ pnpm dev
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| `GET` | `/api/reviews` | Listado con búsqueda por empresa (`?q=`) y paginación |
+| `GET` | `/api/reviews` | Listado con búsqueda por empresa (`?q=`), filtros por `?companyId=` y por etapa `?stage=`, y paginación |
 | `GET` | `/api/reviews/:id` | Detalle de review con todos sus stages, comentarios y ratings |
-| `POST` | `/api/reviews` | Crear review con stage_reviews anidados (transacción atómica) |
+| `POST` | `/api/reviews` | Crear review con stage_reviews anidados (transacción atómica). Anti-spam: cooldown 30 días por IP+empresa y máx. 1 review/5 min por IP (`429`) |
 
 ### Stages
 
@@ -155,6 +167,7 @@ El esquema actual tiene 6 tablas:
 │   │   ├── slug.ts           # Generación de slugs URL-safe
 │   │   ├── search.ts         # Búsqueda accent-insensitive (unaccent)
 │   │   ├── utils.ts          # Utilidades (cn para Tailwind)
+│   │   ├── useToast.ts       # Composable de toasts
 │   │   └── validations.ts    # Schemas Zod para la API
 │   ├── pages/
 │   │   ├── api/
@@ -170,11 +183,15 @@ El esquema actual tiene 6 tablas:
 │   │   │       └── index.ts
 │   │   ├── companies/
 │   │   │   ├── index.astro
-│   │   │   └── [slug].astro
+│   │   │   ├── [slug].astro
+│   │   │   └── new.astro
 │   │   ├── reviews/
-│   │   │   └── [id].astro
+│   │   │   ├── [id].astro
+│   │   │   └── new.astro
 │   │   └── index.astro
 │   └── styles/
+│       └── global.css
+├── drizzle/                   # Migraciones generadas (SQL + snapshots)
 ├── requests/                  # Archivos .http para probar la API
 ├── drizzle.config.ts
 ├── astro.config.mjs
