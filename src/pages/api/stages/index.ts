@@ -48,7 +48,7 @@ export const POST: APIRoute = async ({request}) => {
 
 		if (!parsed.success) {
 			return new Response(
-				JSON.stringify({ error: "Datos inválidos", details: parsed.error.issues }),
+				JSON.stringify({ error: "Faltan datos obligatorios", details: parsed.error.issues }),
 				{ status: 400, headers: { "Content-Type": "application/json" } }
 			);
 		}

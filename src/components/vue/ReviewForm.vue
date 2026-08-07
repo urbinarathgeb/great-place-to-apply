@@ -205,6 +205,9 @@ const {
           Añadir paso
         </button>
       </div>
+      <p v-if="fieldErrors.stageReviews" class="text-sm text-destructive">
+        {{ fieldErrors.stageReviews[0] }}
+      </p>
 
       <div
         v-for="(stage, i) in stages"
