@@ -77,10 +77,39 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const ip = request.headers.get("x-forwarded-for") || "unknown";
+    const rawIp = request.headers.get("x-forwarded-for");
+    const ip = rawIp ? rawIp.split(",")[0].trim() : "unknown";
     const ipHash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ip)).then((h) => {
       return Array.from(new Uint8Array(h)).map((b) => b.toString(16).padStart(2, "0")).join("");
     });
+
+    // ── Anti-spam: cooldown por IP + empresa (30 días) ────────────
+    const [cooldown] = await db
+      .select({ id: reviews.id })
+      .from(reviews)
+      .where(and(eq(reviews.companyId, parsed.data.companyId), eq(reviews.ipHash, ipHash), sql`${reviews.createdAt} > now() - interval '30 days'`))
+      .limit(1);
+
+    if (cooldown) {
+      return new Response(
+        JSON.stringify({ error: "Ya escribiste una review para esta empresa hace menos de 30 días. ¡Gracias por tu feedback!" }),
+        { status: 429, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── Anti-spam: rate limit por IP (máx 1 review cada 5 min) ───
+    const [recent] = await db
+      .select({ id: reviews.id })
+      .from(reviews)
+      .where(and(eq(reviews.ipHash, ipHash), sql`${reviews.createdAt} > now() - interval '5 minutes'`))
+      .limit(1);
+
+    if (recent) {
+      return new Response(
+        JSON.stringify({ error: "Espera unos minutos antes de enviar otra review." }),
+        { status: 429, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
     const result = await db.transaction(async (tx) => {
       const [review] = await tx
