@@ -11,4 +11,5 @@ export const reviews = snakeCase.table('reviews', {
 	createdAt: timestamp().defaultNow().notNull(),
 }, (table) => ({
 	companyCreatedIdx: index('reviews_company_created_idx').on(table.companyId, table.createdAt),
+	ipCreatedIdx: index('reviews_ip_created_idx').on(table.ipHash, table.createdAt),
 }))

@@ -1,0 +1,1 @@
+CREATE INDEX "reviews_ip_created_idx" ON "reviews" ("ip_hash","created_at");
