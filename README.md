@@ -83,8 +83,25 @@ pnpm dev
 | `pnpm db:setup` | Habilitar extensiones (unaccent) |
 | `pnpm db:seed` | Poblar datos iniciales (incluye reviews demo) |
 | `pnpm db:seed:prod` | Poblar datos iniciales sin reviews demo (producción) |
+| `pnpm db:stats` | Mostrar resumen de la DB local (conteos por tabla) |
+| `pnpm db:push:prod` | Aplicar cambios de schema a la DB de producción |
+| `pnpm db:setup:prod` | Habilitar extensiones en producción (unaccent) |
+| `pnpm db:stats:prod` | Mostrar resumen de la DB de producción |
+| `pnpm db:backup:prod` | Respaldo de producción: resumen + dump `.dump` en `/tmp` |
+| `pnpm db:pull:prod` | Traer datos de producción a la DB local (reemplaza datos locales) |
+| `pnpm db:reset:prod` | **Borrar SOLO reviews** de producción (pide confirmación) |
 | `pnpm db:studio` | Abrir Drizzle Studio (UI para explorar la DB) |
 | `pnpm astro check` | Verificar tipos TypeScript |
+
+> **Nota sobre `db:reset:prod`:** borra **únicamente las reviews** (y sus ratings
+> asociados). Las empresas, categorías y etapas del catálogo quedan intactas.
+> Útil para limpiar pruebas cerradas antes del lanzamiento. Pide confirmación
+> (`RESET`) antes de ejecutar; se recomienda `pnpm db:backup:prod` previo.
+
+> Los comandos `*:prod` leen `DATABASE_URL` desde `.env.production`. Crea ese
+> archivo copiando `.env.production` con la URL de conexión de Supabase
+> (recomendado: **Session pooler** desde Project Settings → Database →
+> Connection string). El archivo está en `.gitignore` y nunca se commitea.
 
 ---
 
