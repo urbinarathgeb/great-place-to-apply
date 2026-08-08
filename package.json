@@ -22,8 +22,8 @@
     "db:seed:prod": "SEED_REVIEWS=false NODE_ENV=production dotenv -e .env.production -- tsx src/db/seed.ts",
     "db:reset:prod": "NODE_ENV=production dotenv -e .env.production -- tsx src/db/reset.ts",
     "db:stats:prod": "NODE_ENV=production dotenv -e .env.production -- tsx src/db/stats.ts",
-    "db:backup:prod": "NODE_ENV=production dotenv -e .env.production -- sh -c 'tsx src/db/stats.ts && pg_dump \"$DATABASE_URL\" -Fc -f /tmp/gpta-prod-$(date +%Y%m%d-%H%M).dump'",
-    "db:pull:prod": "NODE_ENV=production dotenv -e .env.production -- sh -c 'pg_dump \"$DATABASE_URL\" -Fc -f /tmp/gpta-prod.dump && pg_restore --clean --if-exists -d gpta /tmp/gpta-prod.dump'"
+    "db:backup:prod": "NODE_ENV=production dotenv -e .env.production -- sh -c 'tsx src/db/stats.ts && /opt/homebrew/opt/libpq/bin/pg_dump \"$DATABASE_URL\" -Fc -f /tmp/gpta-prod-$(date +%Y%m%d-%H%M).dump'",
+    "db:pull:prod": "NODE_ENV=production dotenv -e .env.production -- sh -c '/opt/homebrew/opt/libpq/bin/pg_dump \"$DATABASE_URL\" -Fc -f /tmp/gpta-prod.dump && /opt/homebrew/bin/psql -U postgres -h localhost -d gpta -c \"DROP SCHEMA public CASCADE; CREATE SCHEMA public;\" && /opt/homebrew/opt/libpq/bin/pg_restore --if-exists --clean -d gpta /tmp/gpta-prod.dump'"
   },
   "dependencies": {
     "@astrojs/vercel": "^11.0.3",
