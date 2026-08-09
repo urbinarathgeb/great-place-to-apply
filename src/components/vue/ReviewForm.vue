@@ -69,16 +69,19 @@ const {
     <!-- Company -->
     <div class="flex flex-col gap-2">
       <label class="text-sm font-medium text-foreground">
-        ¿Para qué empresa postulaste?
+        ¿Para qué empresa postulaste? <span class="text-destructive">*</span>
       </label>
       <Combobox
         v-model="selectedCompanyId"
         v-model:search-term="companyQuery"
         v-model:open="showDropdown"
       >
-        <ComboboxAnchor class="relative flex items-center">
+        <ComboboxAnchor
+          data-field="company"
+          class="relative flex items-center"
+        >
           <ComboboxInput
-            wrapper-class="combobox-organic"
+            :wrapper-class="fieldErrors.company ? 'combobox-organic combobox-organic-error' : 'combobox-organic'"
             class="pe-8"
             placeholder="Buscar empresa..."
             :display-value="displayCompanyName"
@@ -135,7 +138,11 @@ const {
         v-model="role"
         type="text"
         placeholder="Ej: Analista de Riesgo"
-        class="input-organic w-full px-4 py-3 text-base md:text-sm outline-none placeholder:text-muted-foreground"
+        data-field="role"
+        :class="[
+          'input-organic w-full px-4 py-3 text-base md:text-sm outline-none placeholder:text-muted-foreground',
+          fieldErrors.role ? 'input-organic-error' : '',
+        ]"
       />
       <p v-if="fieldErrors.role" class="text-sm text-destructive">
         {{ fieldErrors.role[0] }}
@@ -147,23 +154,29 @@ const {
       <span class="text-sm font-medium text-foreground">
         ¿Recomendarías esta empresa? <span class="text-destructive">*</span>
       </span>
-      <div class="grid grid-cols-2 gap-2">
+      <div class="grid grid-cols-2 gap-2" data-field="recommends">
         <button
           type="button"
-          :class="recommends === true
-            ? 'border-primary/40 bg-primary-fixed text-primary'
-            : 'border-input/60 bg-white/60 text-muted-foreground hover:border-primary/40 hover:text-foreground'"
-          class="rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors"
+          :class="[
+            'rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors',
+            fieldErrors.recommends ? 'border-destructive/60 ring-2 ring-destructive/25' : '',
+            recommends === true
+              ? 'border-primary/40 bg-primary-fixed text-primary'
+              : 'border-input/60 bg-white/60 text-muted-foreground hover:border-primary/40 hover:text-foreground',
+          ]"
           @click="recommends = recommends === true ? null : true"
         >
           Sí, la recomiendo
         </button>
         <button
           type="button"
-          :class="recommends === false
-            ? 'border-destructive/40 bg-destructive/10 text-destructive'
-            : 'border-input/60 bg-white/60 text-muted-foreground hover:border-primary/40 hover:text-foreground'"
-          class="rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors"
+          :class="[
+            'rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors',
+            fieldErrors.recommends ? 'border-destructive/60 ring-2 ring-destructive/25' : '',
+            recommends === false
+              ? 'border-destructive/40 bg-destructive/10 text-destructive'
+              : 'border-input/60 bg-white/60 text-muted-foreground hover:border-primary/40 hover:text-foreground',
+          ]"
           @click="recommends = recommends === false ? null : false"
         >
           No la recomiendo
@@ -177,24 +190,30 @@ const {
     <!-- General comment -->
     <div class="flex flex-col gap-2">
       <label for="comment" class="text-sm font-medium text-foreground">
-        Resumen general de tu experiencia
+        Resumen general de tu experiencia <span class="text-destructive">*</span>
       </label>
       <textarea
         id="comment"
         v-model="comment"
         rows="4"
         placeholder="Cuéntanos qué tal fue el trato, la claridad de la información y tus impresiones generales..."
-        class="input-organic w-full min-h-16 px-4 py-3 text-base md:text-sm resize-y outline-none placeholder:text-muted-foreground"
+        data-field="comment"
+        :class="[
+          'input-organic w-full min-h-16 px-4 py-3 text-base md:text-sm resize-y outline-none placeholder:text-muted-foreground',
+          fieldErrors.comment ? 'input-organic-error' : '',
+        ]"
       />
-      <p v-if="fieldErrors.comment || fieldErrors['stageReviews.comment']" class="text-sm text-destructive">
-        {{ fieldErrors.comment?.[0] || fieldErrors['stageReviews.comment']?.[0] }}
+      <p v-if="fieldErrors.comment" class="text-sm text-destructive">
+        {{ fieldErrors.comment[0] }}
       </p>
     </div>
 
     <!-- Stages -->
     <div class="flex flex-col gap-4">
       <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-foreground">Pasos del proceso</h2>
+        <h2 class="text-lg font-semibold text-foreground">
+          Pasos del proceso <span class="text-destructive">*</span>
+        </h2>
         <button
           type="button"
           class="flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:underline disabled:pointer-events-none disabled:opacity-50"
@@ -238,7 +257,13 @@ const {
         </div>
 
         <Select v-model="stage.stageId">
-          <SelectTrigger class="h-11 w-full rounded-xl border-primary/15 bg-[#f0f3ff]/60">
+          <SelectTrigger
+            :data-field="'stageReviews.' + i + '.stageId'"
+            :class="[
+              'h-11 w-full rounded-xl border-primary/15 bg-[#f0f3ff]/60',
+              fieldErrors[`stageReviews.${i}.stageId`] ? 'border-destructive/60 ring-2 ring-destructive/25' : '',
+            ]"
+          >
             <SelectValue placeholder="Seleccionar etapa" />
           </SelectTrigger>
           <SelectContent>
@@ -261,10 +286,26 @@ const {
           v-model="stage.comment"
           rows="3"
           placeholder="Comentario de esta etapa..."
-          class="input-organic w-full min-h-16 px-4 py-3 text-base md:text-sm resize-y outline-none placeholder:text-muted-foreground"
+          :data-field="'stageReviews.' + i + '.comment'"
+          :class="[
+            'input-organic w-full min-h-16 px-4 py-3 text-base md:text-sm resize-y outline-none placeholder:text-muted-foreground',
+            fieldErrors[`stageReviews.${i}.comment`] ? 'input-organic-error' : '',
+          ]"
         />
+        <p
+          v-if="fieldErrors[`stageReviews.${i}.comment`]"
+          class="text-sm text-destructive"
+        >
+          {{ fieldErrors[`stageReviews.${i}.comment`][0] }}
+        </p>
+        <p
+          v-if="fieldErrors[`stageReviews.${i}.stageId`]"
+          class="text-sm text-destructive"
+        >
+          {{ fieldErrors[`stageReviews.${i}.stageId`][0] }}
+        </p>
 
-        <div>
+        <div :data-field="'stageReviews.' + i + '.ratings'">
           <p class="text-xs font-medium text-muted-foreground mb-1">Puntuaciones</p>
           <p class="text-[11px] text-muted-foreground/70 mb-2">
             Al menos 1 por etapa. Califica los que apliquen; los sugeridos aparecen primero.
@@ -315,7 +356,11 @@ const {
 
       <div
         v-if="stages.length === 0"
-        class="text-sm text-muted-foreground text-center py-6 border-2 border-dashed border-primary/20 rounded-xl"
+        data-field="stageReviews"
+        :class="[
+          'text-sm text-muted-foreground text-center py-6 border-2 border-dashed rounded-xl',
+          fieldErrors.stageReviews ? 'border-destructive/60 bg-destructive/5 text-destructive' : 'border-primary/20',
+        ]"
       >
         Agrega al menos una etapa del proceso de selección
       </div>
@@ -355,6 +400,17 @@ const {
   background-color: #ffffff;
   border-color: #3525cd;
   box-shadow: 0 0 0 4px rgb(79 70 229 / 0.1);
+  outline: none;
+}
+
+.combobox-organic-error {
+  border-color: #ba1a1a;
+  box-shadow: 0 0 0 4px rgb(186 26 26 / 0.12);
+}
+.combobox-organic-error:focus-within {
+  background-color: #ffffff;
+  border-color: #ba1a1a;
+  box-shadow: 0 0 0 4px rgb(186 26 26 / 0.12);
   outline: none;
 }
 </style>

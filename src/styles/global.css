@@ -139,6 +139,18 @@
     outline: none;
   }
 
+  .input-organic-error {
+    border-color: #ba1a1a;
+    background-color: #fff5f5;
+    box-shadow: 0 0 0 4px rgb(186 26 26 / 0.12);
+  }
+  .input-organic-error:focus,
+  .input-organic-error:focus-visible {
+    border-color: #ba1a1a;
+    box-shadow: 0 0 0 4px rgb(186 26 26 / 0.12);
+    outline: none;
+  }
+
   .input-organic-wrap {
     display: flex;
     align-items: center;
@@ -152,6 +164,17 @@
     background-color: #ffffff;
     border-color: #4f46e5;
     box-shadow: 0 0 0 4px rgb(79 70 229 / 0.15);
+    outline: none;
+  }
+
+  .input-organic-wrap-error {
+    border-color: #ba1a1a;
+    background-color: #fff5f5;
+  }
+  .input-organic-wrap-error:focus-within {
+    background-color: #ffffff;
+    border-color: #ba1a1a;
+    box-shadow: 0 0 0 4px rgb(186 26 26 / 0.12);
     outline: none;
   }
 }

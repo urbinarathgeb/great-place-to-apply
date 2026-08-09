@@ -22,9 +22,9 @@ export function useToast() {
 }
 
 const bgMap: Record<Toast['type'], string> = {
-  success: 'bg-green-50 border-green-200 text-green-700',
-  error: 'bg-destructive/10 border-destructive/20 text-destructive',
-  info: 'bg-blue-50 border-blue-200 text-blue-700',
+  success: 'bg-green-700 border-green-800 text-white',
+  error: 'bg-destructive border-destructive text-white',
+  info: 'bg-blue-700 border-blue-800 text-white',
 }
 
 export function toastClass(type: Toast['type']) {

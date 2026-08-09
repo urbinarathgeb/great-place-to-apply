@@ -168,29 +168,78 @@ export function useReviewForm(options: UseReviewFormOptions) {
     return options.companies.find((c) => c.id === id)?.name ?? ''
   }
 
-  async function submit() {
+  function scrollToFirstError() {
+    const keys = Object.keys(fieldErrors.value)
+    if (keys.length === 0) return
+    const priority = ['company', 'role', 'recommends', 'comment']
+    const sorted = [...keys].sort((a, b) => {
+      const ia = priority.indexOf(a)
+      const ib = priority.indexOf(b)
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib)
+    })
+    const target = document.querySelector(`[data-field="${sorted[0]}"]`)
+    target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    ;(target as HTMLElement | null)?.focus?.()
+  }
+
+  function validate(): boolean {
     fieldErrors.value = {}
 
     if (!selectedCompany.value) {
       fieldErrors.value = { company: ['Selecciona una empresa'] }
-      return
+      return false
     }
 
     if (!role.value.trim()) {
       fieldErrors.value = { role: ['El rol o puesto es obligatorio'] }
-      return
+      return false
     }
 
     if (recommends.value === null) {
       fieldErrors.value = { recommends: ['Indica si recomendarías esta empresa'] }
-      return
+      return false
     }
 
-    const unratedStage = stages.findIndex((s) => !Object.values(s.ratings).some((v) => v > 0))
-    if (unratedStage !== -1) {
-      fieldErrors.value = {
-        [`stageReviews.${unratedStage}.ratings`]: ['Califica al menos un aspecto en esta etapa'],
+    if (!comment.value.trim()) {
+      fieldErrors.value = { comment: ['El comentario general es obligatorio'] }
+      return false
+    }
+
+    if (stages.length === 0) {
+      fieldErrors.value = { stageReviews: ['Agrega al menos una etapa del proceso'] }
+      return false
+    }
+
+    const errors: Record<string, string[]> = {}
+    for (let i = 0; i < stages.length; i++) {
+      const s = stages[i]
+      if (s.stageId === null) {
+        errors[`stageReviews.${i}.stageId`] = ['Selecciona la etapa']
       }
+      if (s.comment.trim().length < 10) {
+        errors[`stageReviews.${i}.comment`] = ['El comentario debe tener al menos 10 caracteres']
+      }
+      if (!Object.values(s.ratings).some((v) => v > 0)) {
+        errors[`stageReviews.${i}.ratings`] = ['Califica al menos un aspecto en esta etapa']
+      }
+    }
+    if (Object.keys(errors).length > 0) {
+      fieldErrors.value = errors
+      return false
+    }
+
+    return true
+  }
+
+  function firstError(): string {
+    const values = Object.values(fieldErrors.value)
+    return values[0]?.[0] ?? 'Revisa los campos marcados en el formulario'
+  }
+
+  async function submit() {
+    if (!validate()) {
+      show(firstError(), 'error')
+      scrollToFirstError()
       return
     }
 
@@ -228,8 +277,11 @@ export function useReviewForm(options: UseReviewFormOptions) {
             grouped[path].push(issue.message)
           }
           fieldErrors.value = grouped
+          show(firstError(), 'error')
+        } else {
+          show(data.error || 'Error al enviar la review', 'error')
         }
-        show(data.error || 'Error al enviar la review', 'error')
+        scrollToFirstError()
         return
       }
 

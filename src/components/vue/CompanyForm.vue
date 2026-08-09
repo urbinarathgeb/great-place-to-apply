@@ -31,23 +31,46 @@ const submitting = ref(false)
 const fieldErrors = ref<Record<string, string[]>>({})
 const { toasts, show } = useToast()
 
+function normalizeUrl(value: string): string | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+}
+
+function firstError(): string {
+  const values = Object.values(fieldErrors.value)
+  return values[0]?.[0] ?? 'Revisa los campos marcados en el formulario'
+}
+
+function scrollToFirstError() {
+  const keys = Object.keys(fieldErrors.value)
+  if (keys.length === 0) return
+  const target = document.querySelector(`[data-field="${keys[0]}"]`)
+  target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  ;(target as HTMLElement | null)?.focus?.()
+}
+
 async function submit() {
   fieldErrors.value = {}
 
   if (!name.value.trim()) {
     fieldErrors.value = { name: ['El nombre es obligatorio'] }
+    show(firstError(), 'error')
+    scrollToFirstError()
     return
   }
 
   if (!categoryId.value) {
     fieldErrors.value = { categoryId: ['Selecciona una categoría'] }
+    show(firstError(), 'error')
+    scrollToFirstError()
     return
   }
 
   const payload = {
     name: name.value.trim(),
-    website: website.value.trim() || null,
-    careersUrl: careersUrl.value.trim() || null,
+    website: normalizeUrl(website.value),
+    careersUrl: normalizeUrl(careersUrl.value),
     description: description.value.trim() || null,
     location: location.value.trim() || null,
     categoryId: categoryId.value,
@@ -73,13 +96,15 @@ async function submit() {
           grouped[path].push(issue.message)
         }
         fieldErrors.value = grouped
-      }
-      if (data.slug) {
+        show(firstError(), 'error')
+      } else if (data.slug) {
         show('Esta empresa ya existe, redirigiendo...', 'info')
         setTimeout(() => { window.location.href = `/companies/${data.slug}` }, 1500)
         return
+      } else {
+        show(data.error || 'Error al crear la empresa', 'error')
       }
-      show(data.error || 'Error al crear la empresa', 'error')
+      scrollToFirstError()
       return
     }
 
@@ -100,13 +125,17 @@ async function submit() {
       <label for="name" class="ml-1 text-sm font-semibold text-muted-foreground">
         Nombre de la empresa <span class="text-destructive">*</span>
       </label>
-      <div class="input-organic-wrap px-4 py-3">
+      <div :class="[
+          'input-organic-wrap px-4 py-3',
+          fieldErrors.name ? 'input-organic-wrap-error' : '',
+        ]">
         <Building2Icon class="size-5 shrink-0 text-muted-foreground" />
         <input
           id="name"
           v-model="name"
           type="text"
           placeholder="Ej: TechSolutions Global"
+          data-field="name"
           class="w-full border-none bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground/50 focus:ring-0 md:text-sm"
         />
       </div>
@@ -121,13 +150,17 @@ async function submit() {
         Sitio web
         <span class="font-normal text-muted-foreground/70">(opcional)</span>
       </label>
-      <div class="input-organic-wrap px-4 py-3">
+      <div :class="[
+          'input-organic-wrap px-4 py-3',
+          fieldErrors.website ? 'input-organic-wrap-error' : '',
+        ]">
         <GlobeIcon class="size-5 shrink-0 text-muted-foreground" />
         <input
           id="website"
           v-model="website"
           type="url"
-          placeholder="https://empresa.com"
+          placeholder="empresa.com"
+          data-field="website"
           class="w-full border-none bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground/50 focus:ring-0 md:text-sm"
         />
       </div>
@@ -141,12 +174,16 @@ async function submit() {
       <label for="category" class="ml-1 text-sm font-semibold text-muted-foreground">
         Categoría <span class="text-destructive">*</span>
       </label>
-      <div class="input-organic-wrap relative px-4 py-3">
+      <div :class="[
+          'input-organic-wrap relative px-4 py-3',
+          fieldErrors.categoryId ? 'input-organic-wrap-error' : '',
+        ]">
         <TagsIcon class="size-5 shrink-0 text-muted-foreground" />
         <select
           id="category"
           v-model="categoryId"
           :class="categoryId ? 'text-foreground' : 'text-muted-foreground/70'"
+          data-field="categoryId"
           class="w-full cursor-pointer appearance-none border-none bg-transparent pr-8 text-base outline-none focus:ring-0 md:text-sm"
         >
           <option :value="null" disabled>Selecciona una industria</option>
@@ -173,13 +210,17 @@ async function submit() {
         Página de empleos
         <span class="font-normal text-muted-foreground/70">(opcional)</span>
       </label>
-      <div class="input-organic-wrap px-4 py-3">
+      <div :class="[
+          'input-organic-wrap px-4 py-3',
+          fieldErrors.careersUrl ? 'input-organic-wrap-error' : '',
+        ]">
         <BriefcaseBusinessIcon class="size-5 shrink-0 text-muted-foreground" />
         <input
           id="careersUrl"
           v-model="careersUrl"
           type="url"
-          placeholder="https://empleos.empresa.com"
+          placeholder="empleos.empresa.com"
+          data-field="careersUrl"
           class="w-full border-none bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground/50 focus:ring-0 md:text-sm"
         />
       </div>
@@ -194,13 +235,17 @@ async function submit() {
         Descripción
         <span class="font-normal text-muted-foreground/70">(opcional)</span>
       </label>
-      <div class="input-organic-wrap px-4 py-3">
+      <div :class="[
+          'input-organic-wrap px-4 py-3',
+          fieldErrors.description ? 'input-organic-wrap-error' : '',
+        ]">
         <FileTextIcon class="size-5 shrink-0 self-start text-muted-foreground" />
         <textarea
           id="description"
           v-model="description"
           rows="3"
           placeholder="Describe brevemente a qué se dedica la empresa..."
+          data-field="description"
           class="w-full resize-y border-none bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground/50 focus:ring-0 md:text-sm"
         />
       </div>
@@ -215,13 +260,17 @@ async function submit() {
         Ubicación
         <span class="font-normal text-muted-foreground/70">(opcional)</span>
       </label>
-      <div class="input-organic-wrap px-4 py-3">
+      <div :class="[
+          'input-organic-wrap px-4 py-3',
+          fieldErrors.location ? 'input-organic-wrap-error' : '',
+        ]">
         <MapPinIcon class="size-5 shrink-0 text-muted-foreground" />
         <input
           id="location"
           v-model="location"
           type="text"
           placeholder="Ciudad, País"
+          data-field="location"
           class="w-full border-none bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground/50 focus:ring-0 md:text-sm"
         />
       </div>

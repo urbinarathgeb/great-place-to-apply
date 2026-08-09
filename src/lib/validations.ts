@@ -3,10 +3,22 @@ import { ASPECTS } from "@/db/schema/aspect-rating.schema";
 
 const ALLOWED_ASPECTS = ASPECTS;
 
+const normalizeUrl = (value: unknown): unknown => {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+};
+
+const optionalUrl = z.preprocess(
+  normalizeUrl,
+  z.string().url("Ingresa una URL válida, por ejemplo: empresa.com o https://empresa.com").nullable(),
+).optional();
+
 export const createCompanySchema = z.object({
   name: z.string().min(2, "Nombre muy corto").max(255),
-  website: z.string().url("URL inválida").optional().nullable(),
-  careersUrl: z.string().url("URL inválida").optional().nullable(),
+  website: optionalUrl,
+  careersUrl: optionalUrl,
   description: z.string().max(2000, "Descripción muy larga").optional().nullable(),
   location: z.string().max(255, "Ubicación muy larga").optional().nullable(),
   categoryId: z.number().int().positive("categoryId debe ser un número positivo"),
