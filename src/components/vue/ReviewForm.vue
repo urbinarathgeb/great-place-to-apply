@@ -215,6 +215,7 @@ const {
           Pasos del proceso <span class="text-destructive">*</span>
         </h2>
         <button
+          v-if="stages.length === 0"
           type="button"
           class="flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:underline disabled:pointer-events-none disabled:opacity-50"
           :disabled="stages.length >= props.stages.length"
@@ -364,6 +365,17 @@ const {
       >
         Agrega al menos una etapa del proceso de selección
       </div>
+
+      <button
+        v-else
+        type="button"
+        class="flex items-center justify-center gap-1.5 w-full py-3 rounded-xl border border-dashed border-primary/30 text-sm font-semibold text-primary transition-colors hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50"
+        :disabled="stages.length >= props.stages.length"
+        @click="addStage"
+      >
+        <CirclePlusIcon class="size-4" />
+        Añadir paso
+      </button>
     </div>
 
     <div class="pt-6 border-t border-white/40 flex flex-col md:flex-row items-center justify-between gap-4">
