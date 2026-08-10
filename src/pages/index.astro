@@ -93,19 +93,19 @@ const stats = [
 const valueProps = [
   {
     title: 'Reviews anónimas',
-    description: 'Comparte tu experiencia sin miedo: tu identidad siempre estará protegida.',
+    description: 'Comparte tu experiencia sin miedo. Tu identidad está protegida.',
     icon: 'shield-user',
     tone: 'primary',
   },
   {
-    title: 'Feedback honesto',
-    description: 'Opiniones directas y sinceras de quienes vivieron el proceso de selección.',
+    title: 'Quienes lo vivieron lo cuentan',
+    description: 'Experiencias reales de candidatos que pasaron por las etapas que tú vas a enfrentar.',
     icon: 'thumbs-up',
     tone: 'secondary',
   },
   {
-    title: 'Procesos de selección',
-    description: '¿Cómo es el proceso de selección? Conoce las etapas y tipos de pruebas.',
+    title: 'Postula con más confianza',
+    description: 'Cuando sabes que la empresa respeta a sus candidatos, le pones más empeño a tu postulación.',
     icon: 'clipboard-list',
     tone: 'tertiary',
   },
@@ -131,16 +131,16 @@ const toneTitle: Record<string, string> = {
 
 const steps = [
   {
-    title: 'Etapas del proceso',
-    description: 'Conoce si hay 2 o 5 entrevistas antes de aplicar.',
+    title: 'Explora y prepárate',
+    description: 'Revisa qué dicen otros candidatos sobre el proceso de una empresa antes de postular y llega con más confianza.',
   },
   {
-    title: 'Pruebas técnicas',
-    description: '¿Live coding o take-home? Descúbrelo por otros candidatos.',
+    title: 'Cuenta tu proceso etapa por etapa',
+    description: 'Agrega las etapa que viviste y califica trato, feedback, rapidez y transparencia.',
   },
   {
-    title: 'Tiempo de respuesta',
-    description: 'Estimaciones reales basadas en experiencias recientes.',
+    title: 'Comparte aunque no hayas quedado',
+    description: 'Quedaste a mitad de camino o no, tu experiencia ayuda a los demás. Lo bueno se comparte.',
   },
 ]
 
@@ -165,7 +165,7 @@ const icons: Record<string, string[]> = {
 }
 ---
 
-<Layout title="Great Place To Apply — Reviews anónimas de procesos de selección" description="Descubre cómo es el proceso de selección en empresas de Chile. Reviews anónimas, puntuaciones y más." wide>
+<Layout title="Great Place To Apply — Reviews anónimas de procesos de selección" description="Reviews anónimas de procesos de selección. Descubre qué empresas tratan bien a los candidatos y postula con más confianza." wide>
   <section class="pt-16 pb-14 md:pt-24 md:pb-20">
     <div class="text-center max-w-3xl mx-auto">
       <div class="inline-flex items-center gap-2 bg-secondary-fixed/20 text-secondary px-4 py-1.5 rounded-full mb-6 text-xs font-semibold">
@@ -173,18 +173,18 @@ const icons: Record<string, string[]> = {
           <path d="M21.8 10a2 2 0 0 0-1-2.3 2 2 0 0 0-1-2.5 2 2 0 0 0-2.5-1A2 2 0 0 0 15 2a2 2 0 0 0-2.3 1 2 2 0 0 0-2.5 1 2 2 0 0 0-1 2.5A2 2 0 0 0 8 8a2 2 0 0 0-1 2.3 2 2 0 0 0 1 2.5 2 2 0 0 0 1 2.5 2 2 0 0 0 2.5 1 2 2 0 0 0 2.3 1 2 2 0 0 0 2.5-1 2 2 0 0 0 2.5-1 2 2 0 0 0 1-2.5 2 2 0 0 0 1-2.3z" />
           <path d="m9 12 2 2 4-4" />
         </svg>
-        Transparencia real en reclutamiento
+        Reviews honestas de procesos de selección
       </div>
 
       <h1 class="text-4xl md:text-6xl font-heading font-extrabold tracking-tight text-primary leading-[1.05]">
-        Descubre cómo es realmente<br class="hidden sm:block" />
-        ese proceso.
+        Antes de postular, descubre<br class="hidden sm:block" />
+        cómo te van a tratar.
       </h1>
 
 
       <p class="mt-4 text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto">
-        Reviews anónimas sobre procesos de selección y cultura. Ayuda a otros
-        candidatos a tomar la mejor decisión y prepararse.
+        Reviews honestas de procesos de selección, hechas por la gente, para la gente.
+        El proceso lo dice todo sobre una empresa.
       </p>
 
       <div class="mt-8">
@@ -246,12 +246,9 @@ const icons: Record<string, string[]> = {
       <div class="flex flex-col lg:flex-row">
         <div class="lg:w-1/2 p-8 md:p-12">
           <h2 class="text-2xl md:text-3xl font-heading font-bold tracking-tight text-primary">
-            ¿Cómo es el proceso de selección?
+            ¿Cómo funciona?
           </h2>
-          <p class="mt-4 text-base text-muted-foreground leading-relaxed">
-            La incertidumbre es el mayor enemigo del talento. En Great Place To Apply,
-            democratizamos la información de reclutamiento para que sepas qué esperar en cada paso.
-          </p>
+
           <ul class="mt-8 space-y-6">
             {steps.map((s, i) => (
               <li class="flex items-start gap-4">
@@ -288,10 +285,10 @@ const icons: Record<string, string[]> = {
     <div class="absolute inset-0 bg-primary opacity-[0.03]"></div>
     <div class="relative z-10 max-w-2xl mx-auto px-4">
       <h2 class="font-heading text-2xl md:text-3xl font-bold tracking-tight text-primary">
-        ¿Tu empresa es un &ldquo;Great Place&rdquo;?
+        ¿Viviste un proceso que vale la pena contar?
       </h2>
       <p class="mt-3 text-base text-muted-foreground leading-relaxed">
-        Únete a miles de profesionales que están cambiando la forma en que buscamos trabajo. Tu opinión cuenta.
+        ¡Compártelo! Tu opinión ayuda a otros candidatos a postular con más confianza.
       </p>
       <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
         <Button href="/reviews/new" size="lg">Escribir mi experiencia</Button>

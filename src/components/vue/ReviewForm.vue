@@ -379,9 +379,6 @@ const {
     </div>
 
     <div class="pt-6 border-t border-white/40 flex flex-col md:flex-row items-center justify-between gap-4">
-      <p class="text-xs text-muted-foreground text-center md:text-left leading-relaxed max-w-xs">
-        Al enviar, aceptas nuestros términos de comunidad y veracidad de la información.
-      </p>
       <Button
         type="submit"
         size="lg"
