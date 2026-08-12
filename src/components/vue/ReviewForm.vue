@@ -315,10 +315,10 @@ const {
             <div
               v-for="aspect in orderedAspectsFor(stage)"
               :key="aspect"
-              class="flex items-center justify-between gap-2"
+              class="flex items-center justify-between gap-x-3 gap-y-1.5 flex-wrap"
             >
-              <span class="flex items-center gap-1.5 text-sm text-foreground shrink-0">
-                {{ aspectLabels[aspect] }}
+              <span class="flex flex-col items-start gap-0.5 w-28 shrink-0">
+                <span class="text-sm text-foreground">{{ aspectLabels[aspect] }}</span>
                 <span
                   v-if="isSuggestedForStage(stage, aspect)"
                   class="text-[10px] font-semibold text-secondary bg-secondary/10 rounded-full px-1.5 py-0.5"

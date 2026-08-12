@@ -129,7 +129,7 @@ function toggleExpand(id: string) {
           </div>
         </div>
 
-        <div class="lg:w-44 lg:shrink-0 lg:border-l lg:border-black/5 lg:pl-5 flex lg:flex-col items-center lg:items-start justify-between gap-3">
+        <div class="lg:w-44 lg:shrink-0 lg:border-l lg:border-black/5 lg:pl-5 flex lg:flex-col items-center lg:items-start justify-between gap-x-3 gap-y-1.5 flex-wrap">
           <div class="flex items-center gap-1.5">
             <span class="text-2xl font-extrabold tabular-nums text-foreground">{{ scoreOf(r) }}</span>
             <span class="text-xs text-muted-foreground">· Recomendación</span>
