@@ -121,7 +121,10 @@ function onFocus() {
     </Transition>
 
     <p v-if="query.trim() && filtered.length === 0" class="mt-2 text-sm text-muted-foreground text-center">
-      Sin resultados. Presiona Enter para buscar &ldquo;{{ query }}&rdquo;
+      Sin resultados.
+      <span class="block mt-1">¿No encuentras tu empresa?
+        <a href="/companies/new" class="text-primary hover:underline font-semibold">Agrégala aquí</a>
+      </span>
     </p>
   </div>
 </template>

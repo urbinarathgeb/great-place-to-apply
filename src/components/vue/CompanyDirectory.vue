@@ -211,11 +211,14 @@ const {
         {{ q.trim() ? `No encontramos "${q.trim()}"` : activeCategory ? `No hay empresas en "${activeCategoryName}"` : 'Aún no hay empresas registradas' }}
       </p>
       <p class="text-sm text-muted-foreground/60 mt-1">
-        {{ q.trim() ? 'Prueba con otro nombre o categoría' : activeCategory ? 'Prueba con otra categoría' : 'Sé el primero en agregar una' }}
+        {{ q.trim() ? 'Prueba con otro nombre o categoría, o agrega la empresa al directorio.' : activeCategory ? 'Prueba con otra categoría, o agrega la empresa al directorio.' : 'Sé el primero en agregar una' }}
       </p>
-      <button v-if="hasFilters" :class="btnOutline" class="mt-6" @click="clearFilters">
-        Limpiar filtros
-      </button>
+      <div class="mt-6 flex flex-col items-center gap-3">
+        <a :href="'/companies/new'" :class="btnOutline">Agregar esta empresa</a>
+        <button v-if="hasFilters" :class="btnOutline" @click="clearFilters">
+          Limpiar filtros
+        </button>
+      </div>
     </div>
 
     <!-- Load more -->

@@ -1,5 +1,6 @@
 ---
 import Layout from '@/layouts/Layout.astro'
+import Button from '@/components/ui/Button.astro'
 import CompanyDirectory from '@/components/vue/CompanyDirectory.vue'
 import { db } from '@/db'
 import { companies } from '@/db/schema/companies.schema'
@@ -107,6 +108,10 @@ const title = q
       <p class="mt-5 text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto">
         Cómo tratan a los candidatos y qué esperar en cada etapa, contado por quienes ya lo vivieron.
       </p>
+
+      <div class="mt-8">
+        <Button href="/companies/new" variant="outline">Agregar empresa</Button>
+      </div>
     </header>
 
     <div class="mt-8">
