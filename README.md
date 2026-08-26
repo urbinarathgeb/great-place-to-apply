@@ -1,5 +1,7 @@
 # Great Place To Apply (GPTA)
 
+## [Ver Live Demo](https://greatplacetoapply.vercel.app/)
+
 ### ¿Qué es?
 
 **Great Place To Apply** es una plataforma de transparencia laboral orientada a mejorar la experiencia de los candidatos durante los procesos de selección. Es un directorio donde los profesionales pueden compartir de forma anónima sus experiencias reales, permitiendo a la comunidad identificar empresas con procesos de contratación éticos y eficientes.
