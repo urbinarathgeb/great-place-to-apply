@@ -1,0 +1,30 @@
+# Mantiene activo el proyecto de Supabase del plan gratuito.
+# Supabase pausa los proyectos gratuitos tras 7 días sin actividad; este job
+# hace una consulta trivial cada 3 días para que el contador no llegue nunca ahí.
+name: Keep Supabase awake
+
+on:
+  schedule:
+    # Cada 3 días a las 06:00 UTC. El margen frente al límite de 7 días cubre
+    # los retrasos habituales del cron de GitHub en horas de mucha carga.
+    - cron: '0 6 */3 * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping a la base de datos
+        env:
+          # Cadena de conexión completa (incluye la contraseña de la DB):
+          # nunca se imprime en el log.
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -eu
+          if [ -z "${DATABASE_URL}" ]; then
+            echo "Falta el secret DATABASE_URL del repositorio." >&2
+            echo "Créalo en Settings -> Secrets and variables -> Actions -> Repository secrets." >&2
+            exit 1
+          fi
+          psql "${DATABASE_URL}" -v ON_ERROR_STOP=1 -t -A -c 'select 1' > /dev/null
+          echo "Ping correcto: la base de datos respondió."
