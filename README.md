@@ -101,6 +101,44 @@ pnpm dev
 
 ---
 
+## Mantener activo el proyecto de Supabase
+
+Supabase **pausa los proyectos del plan gratuito tras 7 días sin actividad**. Para
+evitarlo, el repositorio incluye el workflow
+[`.github/workflows/keep-supabase-awake.yml`](.github/workflows/keep-supabase-awake.yml),
+que cada 3 días (cron `0 6 */3 * *`) ejecuta un `select 1` contra la base de datos
+con `psql`. También se puede lanzar a mano desde la pestaña **Actions** con
+*Run workflow*.
+
+### Configuración
+
+Hay que crear el secret `DATABASE_URL` en GitHub:
+
+**Settings → Secrets and variables → Actions → Secrets → New repository secret**
+
+- Nombre: `DATABASE_URL`
+- Valor: la misma cadena de conexión de Supabase que usa `.env.production`
+  (Session pooler, puerto `5432`)
+
+Tiene que ser un **repository secret**, no un *environment secret*: los secrets de
+entorno solo se inyectan si el job declara `environment:`, y este no lo hace.
+
+> ⚠️ **Este secret es sensible.** A diferencia de una `anon key` pública, la
+> cadena de conexión incluye la **contraseña de la base de datos** y da acceso
+> directo a Postgres. Solo debe vivir en los secrets de GitHub y en
+> `.env.production` (ignorado por git). El workflow nunca hace `echo` de la
+> variable ni usa `set -x`, para que no aparezca en los logs de Actions.
+
+### Dos advertencias
+
+- **GitHub desactiva los cron tras 60 días sin commits** en el repositorio. Si el
+  proyecto queda inactivo mucho tiempo, hay que reactivar el workflow desde la
+  pestaña Actions (o hacer un commit).
+- **Si el proyecto ya está pausado, el ping no lo despierta.** Hay que reanudarlo
+  a mano desde el panel de Supabase y después el cron lo mantiene activo.
+
+---
+
 ## API REST
 
 > Las rutas `/api/*` fueron creadas como herramienta de desarrollo y testing.
